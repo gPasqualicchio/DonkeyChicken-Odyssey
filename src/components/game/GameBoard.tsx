@@ -16,7 +16,7 @@ import playerSprite from "@/assets/donkeychicken_M.png";
 const GRID_WIDTH = 8;
 const GRID_HEIGHT = 7;
 const CELL_SIZE = 48;
-const GAP_SIZE = 4;
+const GAP_SIZE = 0; // GAP between tiles
 const SWIPE_THRESHOLD = 30;
 
 export interface Position {
