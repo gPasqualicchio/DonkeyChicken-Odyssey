@@ -8,6 +8,7 @@ import { Level, Position } from "@/types/game";
 import forestBackground from '@/assets/forest-background.jpg';
 import treeSprite from "@/assets/tree-sprite.png";
 import keySprite from "@/assets/key_gold_SIMPLE.png";
+import portalSprite from "@/assets/portal_forest_1.png";
 import playerSprite from "@/assets/donkeychicken_M.png";
 
 // Costanti di gioco (invariate)
@@ -166,7 +167,7 @@ const GameBoard = ({ level, onLevelComplete }: GameBoardProps) => {
       case 'start': return 'A';
       case 'end': return 'B';
       case 'key': return <img src={keySprite} alt="Chiave" className="w-10 h-10 object-contain" />;
-      case 'door': return '🚪';
+      case 'door': return <img src={portalSprite} alt="Porta" className="w-10 h-10 object-contain" />;
       default: return '';
     }
   };

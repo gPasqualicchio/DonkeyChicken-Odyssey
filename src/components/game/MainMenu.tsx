@@ -1,12 +1,6 @@
 import { Button } from "@/components/ui/button";
 
-// --- CORREZIONE PER L'ANTEPRIMA ---
-// L'ambiente di anteprima non può accedere ai tuoi file locali.
-// Per far funzionare il codice qui, usiamo un URL pubblico per l'immagine di sfondo.
-// Quando userai questo codice nel tuo progetto, DECOMMENTA la riga 'import'
-// e COMMENTA la costante 'mainMenuBackground' per usare la tua immagine locale.
-
- import mainMenuBackground from '@/assets/SfondoCiuco1.png';
+import mainMenuBackground from '@/assets/SfondoCiuco1.png';
 
 interface MainMenuProps {
   onStartNewGame: () => void;
@@ -26,8 +20,7 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
       {/* Il resto del contenuto del menu rimane invariato */}
       <div className="w-full h-full flex flex-col items-center justify-center gap-8 p-4 text-white">
         <div className="bg-black/50 backdrop-blur-sm rounded-lg p-8 text-center">
-          <h1 className="text-6xl font-bold mb-4">Forest Adventure Quest</h1>
-          <p className="text-xl text-green-200">Un'avventura in una foresta misteriosa</p>
+          <h1 className="text-5xl font-bold mb-4">Forest Adventure Quest</h1>
         </div>
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <Button
