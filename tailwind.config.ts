@@ -52,16 +52,25 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+				game: {
+					wall: 'hsl(var(--game-wall))',
+					floor: 'hsl(var(--game-floor))',
+					path: 'hsl(var(--game-path))',
+					start: 'hsl(var(--game-start))',
+					end: 'hsl(var(--game-end))',
+					player: 'hsl(var(--game-player))'
 				}
+			},
+			backgroundImage: {
+				'gradient-game': 'var(--gradient-game)',
+				'gradient-button': 'var(--gradient-button)'
+			},
+			boxShadow: {
+				'game': 'var(--shadow-game)',
+				'button': 'var(--shadow-button)'
+			},
+			transitionTimingFunction: {
+				'bounce': 'var(--bounce)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
