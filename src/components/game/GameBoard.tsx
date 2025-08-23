@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import forestBackground from '@/assets/forest-background.jpg';
 import treeSprite from "@/assets/tree-sprite.png";
-import playerSprite from "@/assets/donkeychicken.png";
+import playerSprite from "@/assets/donkeychicken_M.png";
 
 
 // --- MODIFICA: Griglia 8x7 ---
@@ -214,7 +214,7 @@ const GameBoard = () => {
             }}
           >
             <div className="w-full h-full flex items-center justify-center">
-              <img src={playerSprite} alt="Personaggio DonkeyChicken" className="w-10 h-10 object-contain drop-shadow-lg" />
+              <img src={playerSprite} alt="Personaggio DonkeyChicken" className="w-11 h-11 object-contain drop-shadow-lg" />
             </div>
           </div>
         </div>
