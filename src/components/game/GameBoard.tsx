@@ -31,38 +31,27 @@ export interface GameState {
   obstacles: Position[];
 }
 
-const generateObstacles = (): Position[] => {
-  const obstacles: Position[] = [];
-  const numObstacles = 12;
-  const startPos = { x: 0, y: 0 };
-  const endPos = { x: GRID_SIZE - 1, y: GRID_SIZE - 1 };
-
-  for (let i = 0; i < numObstacles; i++) {
-    let newObstacle: Position;
-    let isInvalidPosition: boolean;
-    do {
-      newObstacle = {
-        x: Math.floor(Math.random() * GRID_SIZE),
-        y: Math.floor(Math.random() * GRID_SIZE),
-      };
-      isInvalidPosition =
-        (newObstacle.x === startPos.x && newObstacle.y === startPos.y) ||
-        (newObstacle.x === endPos.x && newObstacle.y === endPos.y) ||
-        obstacles.some(obs => obs.x === newObstacle.x && obs.y === newObstacle.y);
-    } while (isInvalidPosition);
-    obstacles.push(newObstacle);
-  }
-  return obstacles;
-};
+// --- DEFINIZIONE DEL LIVELLO 1 ---
+// Abbiamo rimosso la funzione `generateObstacles` e l'abbiamo sostituita
+// con una configurazione fissa per gli ostacoli del primo livello.
+const level1Obstacles: Position[] = [
+  { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 },
+  { x: 2, y: 2 }, { x: 2, y: 3 },
+  { x: 4, y: 2 }, { x: 5, y: 2 }, { x: 6, y: 2 },
+  { x: 4, y: 3 },
+  { x: 4, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 4 },
+  { x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 },
+];
 
 const getInitialGameState = (): GameState => ({
   playerPosition: { x: 0, y: 0 },
   startPosition: { x: 0, y: 0 },
-  endPosition: { x: GRID_SIZE - 1, y: GRID_SIZE - 1 },
+  endPosition: { x: 7, y: 7 },
   gameWon: false,
   moveCount: 0,
   isMoving: false,
-  obstacles: generateObstacles(),
+  // Ora carichiamo sempre la stessa mappa di ostacoli.
+  obstacles: level1Obstacles,
 });
 
 const GameBoard = () => {
