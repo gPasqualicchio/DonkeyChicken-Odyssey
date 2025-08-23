@@ -1,23 +1,26 @@
-import { useState } from 'react';
-import MainMenu from './components/game/MainMenu'; // Assicurati che il percorso sia corretto
-import GameBoard from './components/game/GameBoard'; // Assicurati che il percorso sia corretto
+// src/App.tsx
 
-type GameScreen = 'menu' | 'game';
+import { useState } from "react";
+
+// MODIFICATO: Importa GameManager invece di GameBoard
+import MainMenu from './components/game/MainMenu';
+import GameManager from './components/GameManager'; // Assicurati che il percorso sia corretto
+
+type Screen = 'menu' | 'game';
 
 function App() {
-  const [screen, setScreen] = useState<GameScreen>('menu');
+  const [screen, setScreen] = useState<Screen>('menu');
 
   const startGame = () => {
     setScreen('game');
   };
 
-  // L'elemento <main> ora è un semplice contenitore senza stile di sfondo.
-  // Occuperà l'intera schermata e al suo interno verrà renderizzato
-  // il componente corretto (MainMenu o GameBoard), che avrà il proprio sfondo.
   return (
-    <main className="min-h-screen w-full">
+    <main className="main-h-screen w-full">
       {screen === 'menu' && <MainMenu onStartNewGame={startGame} />}
-      {screen === 'game' && <GameBoard />}
+
+      {/* MODIFICATO: Renderizza GameManager quando il gioco inizia */}
+      {screen === 'game' && <GameManager />}
     </main>
   );
 }
