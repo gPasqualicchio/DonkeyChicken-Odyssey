@@ -8,23 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 // Quando userai questo codice nel tuo progetto, DECOMMENTA le righe 'import'
 // e COMMENTA le costanti '...Url' per usare le tue immagini locali.
 
-
-import forestBackground from "@/assets/forest-background.jpg";
+import forestBackground from '@/assets/forest-background.jpg';
 import treeSprite from "@/assets/tree-sprite.png";
-import playerSprite from "@/assets/ciucopollo.png"; // Il tuo sprite!
-
-
-//const forestBackground = "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=2070&auto=format&fit=crop";
-//const treeSprite = "https://raw.githubusercontent.com/gPasqualicchio/DonkeyChicken-Odyssey/main/src/assets/tree-sprite.png";
-//const playerSprite = "https://raw.githubusercontent.com/gPasqualicchio/DonkeyChicken-Odyssey/main/src/assets/donkeychicken.png";
-
+import playerSprite from "@/assets/donkeychicken.png";
 
 const GRID_SIZE = 8;
 const CELL_SIZE = 48;
 const GAP_SIZE = 4;
-
-// --- TIPI DI STATO ---
-type GameScreen = 'menu' | 'game';
 
 export interface Position {
   x: number;
@@ -41,7 +31,6 @@ export interface GameState {
   obstacles: Position[];
 }
 
-// --- FUNZIONI DI GIOCO ---
 const generateObstacles = (): Position[] => {
   const obstacles: Position[] = [];
   const numObstacles = 12;
@@ -76,7 +65,6 @@ const getInitialGameState = (): GameState => ({
   obstacles: generateObstacles(),
 });
 
-// --- COMPONENTE GAMEBOARD ---
 const GameBoard = () => {
   const { toast } = useToast();
   const [gameState, setGameState] = useState<GameState>(getInitialGameState);
@@ -164,12 +152,18 @@ const GameBoard = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center gap-6 p-4">
+    <div
+      className="min-h-screen w-full flex flex-col items-center justify-center gap-6 p-4"
+      style={{
+        backgroundImage: `url(${forestBackground})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
       <div className="bg-black/50 backdrop-blur-sm rounded-lg p-4 text-center">
         <h1 className="text-4xl font-bold text-white mb-2">Forest Adventure Quest</h1>
         <p className="text-green-200">Navigate through the forest from A to B • Moves: {gameState.moveCount}</p>
       </div>
-
       <div className="bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-lg p-2 shadow-2xl">
         <div className="relative">
           <div className="grid grid-cols-8" style={{ gap: `${GAP_SIZE}px` }}>
@@ -184,7 +178,6 @@ const GameBoard = () => {
               );
             })}
           </div>
-
           <div
             className="absolute pointer-events-none transition-all duration-150 ease-out"
             style={{
@@ -200,7 +193,6 @@ const GameBoard = () => {
           </div>
         </div>
       </div>
-
       <div className="grid grid-cols-3 gap-2 max-w-xs w-full sm:w-auto">
         <div></div>
         <Button onClick={() => movePlayer('up')} disabled={gameState.gameWon || gameState.isMoving} className="bg-green-600/80 hover:bg-green-500/80 text-white shadow-lg border-green-400/50">↑</Button>
@@ -212,7 +204,6 @@ const GameBoard = () => {
         <Button onClick={() => movePlayer('down')} disabled={gameState.gameWon || gameState.isMoving} className="bg-green-600/80 hover:bg-green-500/80 text-white shadow-lg border-green-400/50">↓</Button>
         <div></div>
       </div>
-
       {gameState.gameWon && (
         <div className="text-center p-6 bg-black/60 backdrop-blur-sm border border-yellow-500/50 rounded-lg mt-4">
           <h2 className="text-3xl font-bold text-yellow-300 mb-2">🎉 Foresta Conquistata!</h2>
@@ -224,46 +215,4 @@ const GameBoard = () => {
   );
 };
 
-// --- COMPONENTE MENU PRINCIPALE ---
-const MainMenu = ({ onStartNewGame }: { onStartNewGame: () => void }) => {
-  return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-8 p-4 text-white">
-      <div className="bg-black/50 backdrop-blur-sm rounded-lg p-8 text-center">
-        <h1 className="text-6xl font-bold mb-4">Forest Adventure Quest</h1>
-        <p className="text-xl text-green-200">Un'avventura in una foresta misteriosa</p>
-      </div>
-      <div className="flex flex-col gap-4 w-full max-w-xs">
-        <Button onClick={onStartNewGame} className="text-lg py-6 bg-green-600/80 hover:bg-green-500/80 shadow-lg border-green-400/50">
-          Nuova Partita
-        </Button>
-        <Button disabled className="text-lg py-6">
-          Continua Partita
-        </Button>
-        <Button disabled className="text-lg py-6">
-          Opzioni
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-// --- COMPONENTE PRINCIPALE APP ---
-const App = () => {
-  const [screen, setScreen] = useState<GameScreen>('menu');
-
-  const startGame = () => {
-    setScreen('game');
-  };
-
-  return (
-    <main
-      className="min-h-screen w-full flex flex-col items-center justify-center"
-      style={{ backgroundImage: `url(${forestBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-    >
-      {screen === 'menu' && <MainMenu onStartNewGame={startGame} />}
-      {screen === 'game' && <GameBoard />}
-    </main>
-  );
-};
-
-export default App;
+export default GameBoard;
