@@ -13,6 +13,7 @@ export interface GameState {
   endPosition: Position;
   gameWon: boolean;
   moveCount: number;
+  isMoving: boolean;
 }
 
 const GRID_SIZE = 8;
@@ -25,11 +26,12 @@ const GameBoard = () => {
     startPosition: { x: 0, y: 0 },
     endPosition: { x: 7, y: 7 },
     gameWon: false,
-    moveCount: 0
+    moveCount: 0,
+    isMoving: false
   });
 
   const movePlayer = (direction: 'up' | 'down' | 'left' | 'right') => {
-    if (gameState.gameWon) return;
+    if (gameState.gameWon || gameState.isMoving) return;
 
     setGameState(prev => {
       const newPosition = { ...prev.playerPosition };
@@ -49,6 +51,11 @@ const GameBoard = () => {
           break;
       }
 
+      // Only move if position actually changed
+      if (newPosition.x === prev.playerPosition.x && newPosition.y === prev.playerPosition.y) {
+        return prev;
+      }
+
       const newMoveCount = prev.moveCount + 1;
       const gameWon = newPosition.x === prev.endPosition.x && newPosition.y === prev.endPosition.y;
       
@@ -56,9 +63,15 @@ const GameBoard = () => {
         ...prev,
         playerPosition: newPosition,
         moveCount: newMoveCount,
-        gameWon
+        gameWon,
+        isMoving: true
       };
     });
+
+    // Reset moving state after animation
+    setTimeout(() => {
+      setGameState(prev => ({ ...prev, isMoving: false }));
+    }, 300);
   };
 
   const resetGame = () => {
@@ -67,7 +80,8 @@ const GameBoard = () => {
       startPosition: { x: 0, y: 0 },
       endPosition: { x: 7, y: 7 },
       gameWon: false,
-      moveCount: 0
+      moveCount: 0,
+      isMoving: false
     });
   };
 
@@ -96,7 +110,15 @@ const GameBoard = () => {
   const getCellContent = (cellType: string) => {
     switch (cellType) {
       case 'player':
-        return '🏃';
+        return (
+          <img 
+            src="/lovable-uploads/ce1fbcb4-9bce-4c25-b0af-f1f5e1f41cfd.png" 
+            alt="Llama Character" 
+            className={`w-10 h-10 object-contain transition-all duration-300 ${
+              gameState.isMoving ? 'animate-scale-in' : ''
+            }`}
+          />
+        );
       case 'start':
         return 'A';
       case 'end':
@@ -107,11 +129,13 @@ const GameBoard = () => {
   };
 
   const getCellStyles = (cellType: string) => {
-    const baseStyles = "w-12 h-12 border border-border flex items-center justify-center text-lg font-bold transition-all duration-200";
+    const baseStyles = "w-12 h-12 border border-border flex items-center justify-center text-lg font-bold transition-all duration-300";
     
     switch (cellType) {
       case 'player':
-        return `${baseStyles} bg-game-player shadow-button animate-pulse`;
+        return `${baseStyles} bg-game-player shadow-button ${
+          gameState.isMoving ? 'scale-105' : 'hover-scale'
+        }`;
       case 'start':
         return `${baseStyles} bg-game-start text-primary-foreground`;
       case 'end':
@@ -154,7 +178,7 @@ const GameBoard = () => {
         <div></div>
         <Button
           onClick={() => movePlayer('up')}
-          disabled={gameState.gameWon}
+          disabled={gameState.gameWon || gameState.isMoving}
           className="bg-gradient-button shadow-button"
         >
           ↑
@@ -163,7 +187,7 @@ const GameBoard = () => {
         
         <Button
           onClick={() => movePlayer('left')}
-          disabled={gameState.gameWon}
+          disabled={gameState.gameWon || gameState.isMoving}
           className="bg-gradient-button shadow-button"
         >
           ←
@@ -179,7 +203,7 @@ const GameBoard = () => {
         
         <Button
           onClick={() => movePlayer('right')}
-          disabled={gameState.gameWon}
+          disabled={gameState.gameWon || gameState.isMoving}
           className="bg-gradient-button shadow-button"
         >
           →
@@ -188,7 +212,7 @@ const GameBoard = () => {
         <div></div>
         <Button
           onClick={() => movePlayer('down')}
-          disabled={gameState.gameWon}
+          disabled={gameState.gameWon || gameState.isMoving}
           className="bg-gradient-button shadow-button"
         >
           ↓
