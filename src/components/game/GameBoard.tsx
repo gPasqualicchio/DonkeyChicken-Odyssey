@@ -149,10 +149,7 @@ const GameBoard = () => {
         backgroundPosition: 'center',
       }}
     >
-      <div className="bg-black/50 backdrop-blur-sm rounded-lg p-4 text-center">
-        <h1 className="text-4xl font-bold text-white mb-2">Forest Adventure Quest</h1>
-        <p className="text-green-200">Navigate through the forest from A to B • Moves: {gameState.moveCount}</p>
-      </div>
+
       <div className="bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-lg p-2 shadow-2xl">
         <div className="relative">
           <div className="grid grid-cols-8" style={{ gap: `${GAP_SIZE}px` }}>
@@ -182,24 +179,6 @@ const GameBoard = () => {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2 max-w-xs w-full sm:w-auto">
-        <div></div>
-        <Button onClick={() => movePlayer('up')} disabled={gameState.gameWon || gameState.isMoving} className="bg-green-600/80 hover:bg-green-500/80 text-white shadow-lg border-green-400/50">↑</Button>
-        <div></div>
-        <Button onClick={() => movePlayer('left')} disabled={gameState.gameWon || gameState.isMoving} className="bg-green-600/80 hover:bg-green-500/80 text-white shadow-lg border-green-400/50">←</Button>
-        <Button onClick={resetGame} className="bg-amber-600/80 hover:bg-amber-500/80 text-white text-xs shadow-lg border-amber-400/50">Reset</Button>
-        <Button onClick={() => movePlayer('right')} disabled={gameState.gameWon || gameState.isMoving} className="bg-green-600/80 hover:bg-green-500/80 text-white shadow-lg border-green-400/50">→</Button>
-        <div></div>
-        <Button onClick={() => movePlayer('down')} disabled={gameState.gameWon || gameState.isMoving} className="bg-green-600/80 hover:bg-green-500/80 text-white shadow-lg border-green-400/50">↓</Button>
-        <div></div>
-      </div>
-      {gameState.gameWon && (
-        <div className="text-center p-6 bg-black/60 backdrop-blur-sm border border-yellow-500/50 rounded-lg mt-4">
-          <h2 className="text-3xl font-bold text-yellow-300 mb-2">🎉 Foresta Conquistata!</h2>
-          <p className="text-green-200 mb-3">Hai completato il percorso in {gameState.moveCount} mosse!</p>
-          <Button onClick={resetGame} className="bg-yellow-600/80 hover:bg-yellow-500/80 text-white shadow-lg border-yellow-400/50">Nuova Avventura</Button>
-        </div>
-      )}
     </div>
   );
 };
