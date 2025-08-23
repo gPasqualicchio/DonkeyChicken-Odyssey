@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import forestBackground from "@/assets/forest-background.jpg";
 import treeSprite from "@/assets/tree-sprite.png";
+import donkeyChickenSprite from "@/assets/ciucopollo.png"
 
 export interface Position {
   x: number;
@@ -25,12 +26,12 @@ const CELL_SIZE = 48; // 12 * 4 (w-12 = 3rem = 48px)
 
 const GameBoard = () => {
   const { toast } = useToast();
-  
+
   // Generate random obstacles (trees)
   const generateObstacles = () => {
     const obstacles: Position[] = [];
     const numObstacles = 12;
-    
+
     for (let i = 0; i < numObstacles; i++) {
       let x, y;
       do {
@@ -61,7 +62,7 @@ const GameBoard = () => {
     if (gameState.gameWon || gameState.isMoving) return;
 
     const newPosition = { ...gameState.playerPosition };
-    
+
     switch (direction) {
       case 'up':
         if (newPosition.y > 0) newPosition.y--;
@@ -98,7 +99,7 @@ const GameBoard = () => {
     setTimeout(() => {
       setGameState(prev => {
         const gameWon = newPosition.x === prev.endPosition.x && newPosition.y === prev.endPosition.y;
-        
+
         return {
           ...prev,
           playerPosition: newPosition,
@@ -167,7 +168,7 @@ const GameBoard = () => {
 
   const getCellStyles = (cellType: string) => {
     const baseStyles = "w-12 h-12 border border-green-800/20 flex items-center justify-center text-lg font-bold transition-all duration-300";
-    
+
     switch (cellType) {
       case 'obstacle':
         return `${baseStyles} bg-green-900/30`;
@@ -181,7 +182,7 @@ const GameBoard = () => {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col items-center gap-6 p-4"
       style={{
         backgroundImage: `url(${forestBackground})`,
@@ -216,7 +217,7 @@ const GameBoard = () => {
               })
             )}
           </div>
-          
+
           {/* Smoothly moving character */}
           <div
             className="absolute pointer-events-none transition-all duration-300 ease-out"
@@ -229,9 +230,9 @@ const GameBoard = () => {
             }}
           >
             <div className="w-full h-full flex items-center justify-center">
-              <img 
-                src="/lovable-uploads/ce1fbcb4-9bce-4c25-b0af-f1f5e1f41cfd.png" 
-                alt="Llama Character" 
+              <img
+                src="/lovable-uploads/ce1fbcb4-9bce-4c25-b0af-f1f5e1f41cfd.png"
+                alt="Llama Character"
                 className="w-10 h-10 object-contain drop-shadow-lg"
               />
             </div>
@@ -249,7 +250,7 @@ const GameBoard = () => {
           ↑
         </Button>
         <div></div>
-        
+
         <Button
           onClick={() => movePlayer('left')}
           disabled={gameState.gameWon || gameState.isMoving}
@@ -257,14 +258,14 @@ const GameBoard = () => {
         >
           ←
         </Button>
-        
+
         <Button
           onClick={resetGame}
           className="bg-amber-600/80 hover:bg-amber-500/80 text-white text-xs shadow-lg border-amber-400/50"
         >
           Reset
         </Button>
-        
+
         <Button
           onClick={() => movePlayer('right')}
           disabled={gameState.gameWon || gameState.isMoving}
@@ -272,7 +273,7 @@ const GameBoard = () => {
         >
           →
         </Button>
-        
+
         <div></div>
         <Button
           onClick={() => movePlayer('down')}
@@ -290,7 +291,7 @@ const GameBoard = () => {
           <p className="text-green-200 mb-3">
             You navigated through the forest in {gameState.moveCount} moves!
           </p>
-          <Button 
+          <Button
             onClick={resetGame}
             className="bg-yellow-600/80 hover:bg-yellow-500/80 text-white shadow-lg border-yellow-400/50"
           >
