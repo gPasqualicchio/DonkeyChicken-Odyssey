@@ -12,7 +12,8 @@ import forestBackground from '@/assets/forest-background.jpg';
 import treeSprite from "@/assets/tree-sprite.png";
 import playerSprite from "@/assets/donkeychicken.png";
 
-const GRID_SIZE = 8;
+const GRID_SIZE_X = 8;
+const GRID_SIZE_Y = 7;
 const CELL_SIZE = 48;
 const GAP_SIZE = 4;
 
@@ -35,13 +36,14 @@ export interface GameState {
 // Abbiamo rimosso la funzione `generateObstacles` e l'abbiamo sostituita
 // con una configurazione fissa per gli ostacoli del primo livello.
 const level1Obstacles: Position[] = [
-  { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 },
-  { x: 2, y: 2 }, { x: 2, y: 3 },
-  { x: 4, y: 2 }, { x: 5, y: 2 }, { x: 6, y: 2 },
-  { x: 4, y: 3 },
-  { x: 4, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 4 },
-  { x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 },
-];
+  { x: 0, y: 1 },
+  { x: 1, y: 1 }, { x: 1, y: 5 },
+  { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 5 },
+  { x: 3, y: 5 },
+  { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 },
+  { x: 5, y: 2 },
+  { x: 6, y: 2 }, { x: 6, y: 4 },
+  { x: 7, y: 4 }];
 
 const getInitialGameState = (): GameState => ({
   playerPosition: { x: 0, y: 0 },
@@ -65,9 +67,9 @@ const GameBoard = () => {
       const newPosition = { ...prev.playerPosition };
       switch (direction) {
         case 'up': if (newPosition.y > 0) newPosition.y--; break;
-        case 'down': if (newPosition.y < GRID_SIZE - 1) newPosition.y++; break;
+        case 'down': if (newPosition.y < GRID_SIZE_Y - 1) newPosition.y++; break;
         case 'left': if (newPosition.x > 0) newPosition.x--; break;
-        case 'right': if (newPosition.x < GRID_SIZE - 1) newPosition.x++; break;
+        case 'right': if (newPosition.x < GRID_SIZE_X - 1) newPosition.x++; break;
       }
 
       const hasMoved = newPosition.x !== prev.playerPosition.x || newPosition.y !== prev.playerPosition.y;
@@ -153,9 +155,9 @@ const GameBoard = () => {
       <div className="bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-lg p-2 shadow-2xl">
         <div className="relative">
           <div className="grid grid-cols-8" style={{ gap: `${GAP_SIZE}px` }}>
-            {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, i) => {
-              const x = i % GRID_SIZE;
-              const y = Math.floor(i / GRID_SIZE);
+            {Array.from({ length: GRID_SIZE_X * GRID_SIZE_Y }).map((_, i) => {
+              const x = i % GRID_SIZE_X;
+              const y = Math.floor(i / GRID_SIZE_Y);
               const cellType = getCellType(x, y);
               return (
                 <div key={`${x}-${y}`} className={getCellStyles(cellType)} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}>
