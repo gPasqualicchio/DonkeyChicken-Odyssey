@@ -13,14 +13,15 @@ export const levels: Level[] = [
     endPosition: { x: 7, y: 3 },
     keyPosition: { x: 2, y: 5 },
     doorPosition: { x: 7, y: 2 },
+    //enemiesPosition: [],
     obstacles: [
-        { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 },
-        { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 },                 { x: 6, y: 1 },
-        { x: 0, y: 2 }, { x: 1, y: 2 },                                 { x: 4, y: 2 },                 { x: 6, y: 2 },
-                                                                        { x: 4, y: 3 },                 { x: 6, y: 3 },
-        { x: 0, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 4 },                                                 { x: 6, y: 4 }, { x: 7, y: 4 },
-        { x: 0, y: 5 }, { x: 1, y: 5 },                 { x: 3, y: 5 },                 { x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 },
-        { x: 0, y: 6 }, { x: 1, y: 6 },                                                 { x: 5, y: 6 }, { x: 6, y: 6 }, { x: 7, y: 6 },
+        { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 },                                                 {x:8, y:0} , {x:9, y:0},
+        { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 },                 { x: 6, y: 1 },                 {x:8, y:1} , {x:9, y:1},
+        { x: 0, y: 2 }, { x: 1, y: 2 },                                 { x: 4, y: 2 },                 { x: 6, y: 2 },                 {x:8, y:2} , {x:9, y:2},
+                                                                        { x: 4, y: 3 },                 { x: 6, y: 3 },                 {x:8, y:3} , {x:9, y:3},
+        { x: 0, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 4 },                                                 { x: 6, y: 4 }, { x: 7, y: 4 }, {x:8, y:4} , {x:9, y:4},
+        { x: 0, y: 5 }, { x: 1, y: 5 },                 { x: 3, y: 5 },                 { x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 }, {x:8, y:5} , {x:9, y:5},
+        { x: 0, y: 6 }, { x: 1, y: 6 },                                                 { x: 5, y: 6 }, { x: 6, y: 6 }, { x: 7, y: 6 }, {x:8, y:6} , {x:9, y:6},
     ],
   },
       /*
@@ -31,7 +32,9 @@ export const levels: Level[] = [
     name: "Il Sentiero Tortuoso",
     startPosition: { x: 1, y: 1 },
     endPosition: { x: 6, y: 5 },
-    // Questo livello non ha chiave né porta
+        enemies: [
+          { id: 201, startPosition: { x: 9, y: 6 }, type: 'bruco' }
+        ],
     obstacles: [
       // ...array di ostacoli per il livello 2...
     ],

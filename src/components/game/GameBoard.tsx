@@ -1,7 +1,7 @@
 // GameBoard.tsx
 
 import { useEffect, useRef } from "react";
-import { Level, Position, GameState } from "./types"; // Assumendo che i tipi siano in types.ts
+import { Level, Position, GameState, EnemyState } from "@/game"; // Assumendo che i tipi siano in types.ts
 
 // URL delle immagini e costanti di gioco
 import forestBackground from '@/assets/forest-background.jpg';
@@ -9,12 +9,10 @@ import treeSprite from "@/assets/tree-sprite.png";
 import keySprite from "@/assets/key_gold_SIMPLE.png";
 import portalSprite from "@/assets/portal_forest_1.png";
 import playerSprite from "@/assets/donkeychicken_M.png";
+import brucoSprite from "@/assets/NEMICO_bruco_1.png";
 
-const GRID_WIDTH = 8;
-const GRID_HEIGHT = 7;
-const CELL_SIZE = 48;
-const GAP_SIZE = 0;
-const SWIPE_THRESHOLD = 30;
+// 1. AGGIUNGI QUESTO IMPORT
+import { GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, GAP_SIZE, SWIPE_THRESHOLD } from "@/config/Constants";
 
 interface GameBoardProps {
   level: Level;
@@ -120,7 +118,7 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
 
       <div className="bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-lg p-2 shadow-2xl">
         <div className="relative">
-          <div className="grid grid-cols-8" style={{ gap: `${GAP_SIZE}px` }}>
+          <div className="grid grid-cols-10" style={{ gap: `${GAP_SIZE}px` }}>
             {Array.from({ length: GRID_WIDTH * GRID_HEIGHT }).map((_, i) => {
               const x = i % GRID_WIDTH;
               const y = Math.floor(i / GRID_WIDTH);

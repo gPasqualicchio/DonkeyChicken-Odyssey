@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import GameBoard from "./game/GameBoard";
 import { levels } from "./levels";
 import { useToast } from "@/hooks/use-toast";
-import { Level, GameState } from "./game/types";
+import { Level, GameState, EnemyState } from "@/game";
 
-const GRID_WIDTH = 8;
-const GRID_HEIGHT = 7;
+// 1. AGGIUNGI QUESTO IMPORT
+import { GRID_WIDTH, GRID_HEIGHT } from "@/config/Constants";
 
 const GameManager = () => {
   const { toast } = useToast();
