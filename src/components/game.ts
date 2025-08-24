@@ -8,12 +8,13 @@ export interface Position {
 export interface Level {
   id: number;
   name: string;
-  obstacles: Position[];
-  startPosition: Position;
-  endPosition: Position;
-  keyPosition?: Position;   // Opzionale: non tutti i livelli hanno una chiave
-  doorPosition?: Position;  // Opzionale: non tutti i livelli hanno una porta
-  enemies?: EnemyData[];    // Opzionale: per i nemici
+  grid: string[]; // <-- SOSTITUISCE 'obstacles' E LE POSIZIONI
+  // Le posizioni di start, end, etc. ora sono opzionali perché le leggiamo dalla griglia
+  startPosition?: Position;
+  endPosition?: Position;
+  keyPosition?: Position;
+  doorPosition?: Position;
+  enemies?: EnemyData[];
 }
 
 // Tipi specifici per i nemici

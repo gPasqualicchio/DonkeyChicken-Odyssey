@@ -1,7 +1,7 @@
 // GameBoard.tsx
 
 import { useEffect, useRef } from "react";
-import { Level, Position, GameState } from '../../game'; // Importa i tipi (deve "uscire" di due cartelle)
+import { Level, Position, GameState } from '../../game';
 
 // URL delle immagini e costanti di gioco
 import forestBackground from '@/assets/forest-background.jpg';
@@ -10,8 +10,10 @@ import keySprite from "@/assets/key_gold_SIMPLE.png";
 import portalSprite from "@/assets/portal_forest_1.png";
 import playerSprite from "@/assets/donkeychicken_M.png";
 import brucoSprite from "@/assets/ENEMY_bruco_1.png";
+import pathHorizontalSprite from "@/assets/Forest_Path_Horizontal.png";
+import pathVerticalSprite from "@/assets/Forest_Path_Vertical.png";
 
-// 1. AGGIUNGI QUESTO IMPORT
+// Import delle costanti globali
 import { GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, GAP_SIZE, SWIPE_THRESHOLD } from "@/config/Constants";
 
 interface GameBoardProps {
@@ -24,7 +26,7 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
   const touchStartRef = useRef<Position | null>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
-  // Gestione Input (invariata, chiama onPlayerMove)
+  // Gestione Input (invariato)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat) return;
@@ -64,45 +66,60 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
     };
   }, [onPlayerMove]);
 
-  // Le funzioni di rendering (invariate)
-  const getCellType = (x: number, y: number) => {
-    if (level.keyPosition && x === level.keyPosition.x && y === level.keyPosition.y && !gameState.hasKey) return 'key';
-    if (level.doorPosition && x === level.doorPosition.x && y === level.doorPosition.y) return 'door';
-    if (level.obstacles.some(obs => obs.x === x && obs.y === y)) return 'obstacle';
-    if (x === level.startPosition.x && y === level.startPosition.y) return 'start';
-    if (x === level.endPosition.x && y === level.endPosition.y) return 'end';
-    return 'floor';
+  // Funzioni di Logica e Rendering (invariate)
+  const isWalkable = (x: number, y: number) => {
+    if (y < 0 || y >= GRID_HEIGHT || x < 0 || x >= GRID_WIDTH) return false;
+    return level.grid[y][x] !== '#';
   };
 
-  // <-- ECCO LA PARTE MANCANTE!
-  const getCellContent = (cellType: string) => {
+  const getPathSprite = (x: number, y: number) => {
+    const hasVerticalPath = isWalkable(x, y - 1) || isWalkable(x, y + 1);
+    if (hasVerticalPath) return pathVerticalSprite;
+    const hasHorizontalPath = isWalkable(x - 1, y) || isWalkable(x + 1, y);
+    if (hasHorizontalPath) return pathHorizontalSprite;
+    return pathHorizontalSprite;
+  };
+
+  const getCellType = (x: number, y: number) => {
+    const char = level.grid[y][x];
+    switch (char) {
+      case '#': return 'obstacle';
+      case 'P': return 'start';
+      case 'E': return 'end';
+      case 'K': return gameState.hasKey ? 'floor' : 'key';
+      case 'D': return 'door';
+      default: return 'floor';
+    }
+  };
+
+  const getCellContent = (cellType: string, x: number, y: number) => {
     switch (cellType) {
       case 'obstacle': return <img src={treeSprite} alt="Albero" className="w-10 h-10 object-contain" />;
-      case 'start': return 'A'; // Puoi sostituire con uno sprite se vuoi
-      case 'end': return 'B'; // Puoi sostituire con uno sprite se vuoi
       case 'key': return <img src={keySprite} alt="Chiave" className="w-10 h-10 object-contain" />;
       case 'door': return <img src={portalSprite} alt="Porta" className="w-10 h-10 object-contain" />;
+      case 'floor':
+        const pathSprite = getPathSprite(x, y);
+        return <img src={pathSprite} alt="Percorso" className="w-full h-full object-cover" />;
       default: return '';
     }
   };
 
-  // <-- E ANCHE QUESTA!
   const getCellStyles = (cellType: string) => {
     const baseStyles = "border border-green-800/20 flex items-center justify-center text-2xl font-bold transition-all duration-300";
     switch (cellType) {
       case 'obstacle': return `${baseStyles} bg-green-900/30`;
-      case 'start': return `${baseStyles} bg-green-600/80 text-white shadow-lg`;
-      case 'end': return `${baseStyles} bg-yellow-500/80 text-white shadow-lg`;
-      case 'key': return `${baseStyles} bg-yellow-400/50 animate-pulse`;
+      case 'start': return `${baseStyles} bg-transparent`; // Reso trasparente per vedere il percorso sotto
+      case 'end': return `${baseStyles} bg-transparent`;   // Reso trasparente per vedere il percorso sotto
+      case 'key': return `${baseStyles} bg-transparent`;
       case 'door':
         return gameState.hasKey
           ? `${baseStyles} bg-amber-800/30 opacity-50`
           : `${baseStyles} bg-amber-900/80`;
-      default: return `${baseStyles} bg-green-200/40`;
+      default: return `${baseStyles} bg-transparent`; // Reso trasparente per vedere il percorso sotto
     }
   };
 
-  // Il JSX che renderizza il tutto (invariato)
+  // Il JSX che renderizza il tutto
   return (
     <div
       ref={gameAreaRef}
@@ -118,6 +135,7 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
 
       <div className="bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-lg p-2 shadow-2xl">
         <div className="relative">
+          {/* GRIGLIA DISEGNATA UNA SOLA VOLTA E IN MODO CORRETTO */}
           <div className="grid grid-cols-10" style={{ gap: `${GAP_SIZE}px` }}>
             {Array.from({ length: GRID_WIDTH * GRID_HEIGHT }).map((_, i) => {
               const x = i % GRID_WIDTH;
@@ -125,26 +143,24 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
               const cellType = getCellType(x, y);
               return (
                 <div key={`${x}-${y}`} className={getCellStyles(cellType)} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}>
-                  {/* Questa riga usa getCellContent per disegnare gli oggetti */}
-                  {getCellContent(cellType)}
+                  {getCellContent(cellType, x, y)}
                 </div>
               );
             })}
           </div>
 
+          {/* GIOCATORE */}
           <div
-            className="absolute pointer-events-none transition-all duration-150 ease-out"
+            className="absolute pointer-events-none transition-all duration-150 ease-out z-20"
             style={{
               width: CELL_SIZE, height: CELL_SIZE,
               left: gameState.playerPosition.x * (CELL_SIZE + GAP_SIZE),
               top: gameState.playerPosition.y * (CELL_SIZE + GAP_SIZE),
-              // Nascondiamo il div se il gioco è vinto, per non coprire l'uscita,
               transform: gameState.isMoving ? 'scale(1.1)' : 'scale(1)',
               opacity: gameState.gameWon ? 0 : 1,
             }}
           >
             <div className="w-full h-full flex items-center justify-center">
-              {/* === CONDIZIONE PER MOSTRARE LA X O IL GIOCATORE === */}
               {gameState.isPlayerDead ? (
                 <span className="text-4xl font-black text-red-600 drop-shadow-lg">X</span>
               ) : (
@@ -153,42 +169,40 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
             </div>
           </div>
 
-            {gameState.enemies.map(enemy => {
-                      let currentEnemySprite;
-                      // Questo switch sceglie l'immagine giusta in base al tipo di nemico
-                      switch (enemy.type) {
-                          case 'bruco':
-                              currentEnemySprite = brucoSprite;
-                              break;
-                          // Aggiungerai qui altri 'case' per futuri nemici
-                          default:
-                              currentEnemySprite = brucoSprite;
-                              break;
-                      }
+          {/* NEMICI */}
+          {gameState.enemies.map(enemy => {
+              let currentEnemySprite;
+              switch (enemy.type) {
+                  case 'bruco':
+                      currentEnemySprite = brucoSprite;
+                      break;
+                  default:
+                      currentEnemySprite = brucoSprite;
+                      break;
+              }
 
-                             return (
-                                <div
-                                  key={enemy.id}
-                                  className="absolute pointer-events-none transition-all duration-150 ease-out"
-                                  style={{
-                                    width: CELL_SIZE,
-                                    height: CELL_SIZE,
-                                    left: enemy.position.x * (CELL_SIZE + GAP_SIZE),
-                                    top: enemy.position.y * (CELL_SIZE + GAP_SIZE),
-                                  }}
-                                >
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <img
-                                      src={currentEnemySprite}
-                                      alt={`Nemico ${enemy.type}`}
-                                      className="w-10 h-10 object-contain drop-shadow-md"
-                                    />
-                                  </div>
-                                </div>
-                              );
-                          }
-                      )
-                  }
+              return (
+                <div
+                  key={enemy.id}
+                  className="absolute pointer-events-none transition-all duration-150 ease-out z-10"
+                  style={{
+                    width: CELL_SIZE,
+                    height: CELL_SIZE,
+                    left: enemy.position.x * (CELL_SIZE + GAP_SIZE),
+                    top: enemy.position.y * (CELL_SIZE + GAP_SIZE),
+                  }}
+                >
+                  <div className="w-full h-full flex items-center justify-center">
+                    <img
+                      src={currentEnemySprite}
+                      alt={`Nemico ${enemy.type}`}
+                      className="w-10 h-10 object-contain drop-shadow-md"
+                    />
+                  </div>
+                </div>
+              );
+            })
+          }
         </div>
       </div>
     </div>
