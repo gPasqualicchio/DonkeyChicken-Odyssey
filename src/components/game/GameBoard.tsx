@@ -1,7 +1,7 @@
 // GameBoard.tsx
 
 import { useEffect, useRef } from "react";
-import { Level, Position, GameState, EnemyState } from "@/game"; // Assumendo che i tipi siano in types.ts
+import { Level, Position, GameState } from '../../game'; // Importa i tipi (deve "uscire" di due cartelle)
 
 // URL delle immagini e costanti di gioco
 import forestBackground from '@/assets/forest-background.jpg';
@@ -9,7 +9,7 @@ import treeSprite from "@/assets/tree-sprite.png";
 import keySprite from "@/assets/key_gold_SIMPLE.png";
 import portalSprite from "@/assets/portal_forest_1.png";
 import playerSprite from "@/assets/donkeychicken_M.png";
-import brucoSprite from "@/assets/NEMICO_bruco_1.png";
+import brucoSprite from "@/assets/ENEMY_bruco_1.png";
 
 // 1. AGGIUNGI QUESTO IMPORT
 import { GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, GAP_SIZE, SWIPE_THRESHOLD } from "@/config/Constants";
@@ -131,19 +131,64 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
               );
             })}
           </div>
+
           <div
             className="absolute pointer-events-none transition-all duration-150 ease-out"
             style={{
               width: CELL_SIZE, height: CELL_SIZE,
               left: gameState.playerPosition.x * (CELL_SIZE + GAP_SIZE),
               top: gameState.playerPosition.y * (CELL_SIZE + GAP_SIZE),
+              // Nascondiamo il div se il gioco è vinto, per non coprire l'uscita,
               transform: gameState.isMoving ? 'scale(1.1)' : 'scale(1)',
+              opacity: gameState.gameWon ? 0 : 1,
             }}
           >
             <div className="w-full h-full flex items-center justify-center">
-              <img src={playerSprite} alt="Personaggio DonkeyChicken" className="w-11 h-11 object-contain drop-shadow-lg" />
+              {/* === CONDIZIONE PER MOSTRARE LA X O IL GIOCATORE === */}
+              {gameState.isPlayerDead ? (
+                <span className="text-4xl font-black text-red-600 drop-shadow-lg">X</span>
+              ) : (
+                <img src={playerSprite} alt="Personaggio" className="w-11 h-11 object-contain drop-shadow-lg" />
+              )}
             </div>
           </div>
+
+            {gameState.enemies.map(enemy => {
+                      let currentEnemySprite;
+                      // Questo switch sceglie l'immagine giusta in base al tipo di nemico
+                      switch (enemy.type) {
+                          case 'bruco':
+                              currentEnemySprite = brucoSprite;
+                              break;
+                          // Aggiungerai qui altri 'case' per futuri nemici
+                          default:
+                              currentEnemySprite = brucoSprite;
+                              break;
+                      }
+
+                             return (
+                                <div
+                                  key={enemy.id}
+                                  className="absolute pointer-events-none transition-all duration-150 ease-out"
+                                  style={{
+                                    width: CELL_SIZE,
+                                    height: CELL_SIZE,
+                                    left: enemy.position.x * (CELL_SIZE + GAP_SIZE),
+                                    top: enemy.position.y * (CELL_SIZE + GAP_SIZE),
+                                  }}
+                                >
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <img
+                                      src={currentEnemySprite}
+                                      alt={`Nemico ${enemy.type}`}
+                                      className="w-10 h-10 object-contain drop-shadow-md"
+                                    />
+                                  </div>
+                                </div>
+                              );
+                          }
+                      )
+                  }
         </div>
       </div>
     </div>

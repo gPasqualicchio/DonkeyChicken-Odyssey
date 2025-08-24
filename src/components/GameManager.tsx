@@ -1,12 +1,10 @@
 // GameManager.tsx
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import GameBoard from "./game/GameBoard";
-import { levels } from "./levels";
 import { useToast } from "@/hooks/use-toast";
-import { Level, GameState, EnemyState } from "@/game";
-
-// 1. AGGIUNGI QUESTO IMPORT
+import GameBoard from "./game/GameBoard"; // Importa il componente grafico
+import { levels } from './levels';                     // Importa i dati dei livelli
+import { Level, GameState } from './game';              // Importa i tipi
 import { GRID_WIDTH, GRID_HEIGHT } from "@/config/Constants";
 
 const GameManager = () => {
@@ -24,6 +22,16 @@ const GameManager = () => {
     moveCount: 0,
     isMoving: false,
     hasKey: false,
+    isPlayerDead: false,
+    enemies: level.enemies?.map(e => ({
+        id: e.id,
+        position: e.startPosition,
+        type: e.type,
+        behavior: e.behavior,
+        visionRange: e.visionRange,
+        moveInterval: e.moveInterval,
+        lastMoveTime: 0, // Inizia con il timer a zero
+    })) || [],
   });
 
   const [gameState, setGameState] = useState<GameState>(() => getInitialGameState(currentLevelData));
@@ -68,6 +76,13 @@ const GameManager = () => {
             return prev;
         }
 
+          const isEnemyCollision = prev.enemies.some(enemy => enemy.position.x === newPosition.x && enemy.position.y === newPosition.y);
+          if (isEnemyCollision) {
+              toast({ title: "☠️ Preso!", description: "Sei stato catturato.", variant: "destructive" });
+              // Il giocatore ora è morto, lo stato si aggiorna e il movimento si ferma
+              return { ...prev, isPlayerDead: true };
+          }
+
       let newHasKey = prev.hasKey;
       const isKey = currentLevelData.keyPosition && newPosition.x === currentLevelData.keyPosition.x && newPosition.y === currentLevelData.keyPosition.y;
       if (isKey && !prev.hasKey) {
@@ -102,6 +117,134 @@ const GameManager = () => {
       }
     });
   }, [toast]); // La dipendenza è solo 'toast' che è stabile.
+
+    const canSeePlayer = (enemy: EnemyState, playerPosition: Position): boolean => {
+      const { position, visionRange } = enemy;
+      const obstacles = currentLevelData.obstacles;
+
+      if (!visionRange) return false; // Se non ha raggio visivo, non vede
+
+      // Controlla la linea di vista orizzontale
+      if (position.y === playerPosition.y) {
+          const distance = Math.abs(position.x - playerPosition.x);
+          if (distance > visionRange) return false;
+
+          const dir = Math.sign(playerPosition.x - position.x);
+          for (let i = 1; i < distance; i++) {
+              const checkX = position.x + i * dir;
+              if (obstacles.some(obs => obs.x === checkX && obs.y === position.y)) {
+                  return false; // C'è un ostacolo in mezzo
+              }
+          }
+          return true; // Percorso libero
+      }
+
+      // Controlla la linea di vista verticale
+      if (position.x === playerPosition.x) {
+          const distance = Math.abs(position.y - playerPosition.y);
+          if (distance > visionRange) return false;
+
+          const dir = Math.sign(playerPosition.y - position.y);
+          for (let i = 1; i < distance; i++) {
+              const checkY = position.y + i * dir;
+              if (obstacles.some(obs => obs.x === position.x && obs.y === checkY)) {
+                  return false; // C'è un ostacolo in mezzo
+              }
+          }
+          return true; // Percorso libero
+      }
+
+      return false; // Non è in linea retta
+    };
+
+  // Funzione per resettare il livello
+    const handleLevelReset = useCallback(() => {
+      console.log("Resetting level...");
+      setGameState(getInitialGameState(currentLevelData));
+    }, [currentLevelData]);
+
+    // useEffect che gestisce il timer dopo la morte
+    useEffect(() => {
+      // Se il giocatore non è morto, non fare nulla
+      if (!gameState.isPlayerDead) return;
+
+      // Se il giocatore è morto, avvia un timer di 1.5 secondi
+      const timerId = setTimeout(() => {
+        handleLevelReset();
+      }, 1500); // 1500 millisecondi = 1.5 secondi
+
+      // Funzione di pulizia: se il componente si smonta, cancella il timer
+      return () => {
+        clearTimeout(timerId);
+      };
+    }, [gameState.isPlayerDead, handleLevelReset]); // Questo effetto si attiva solo quando lo stato di morte cambia
+
+
+
+useEffect(() => {
+    const gameLoop = setInterval(() => {
+        // Non aggiornare l'IA se il giocatore ha vinto o è morto
+        if (gameState.gameWon || gameState.isPlayerDead) return;
+
+        const currentTime = Date.now();
+        let playerIsCaught = false;
+
+        const newEnemies = gameState.enemies.map(enemy => {
+            // Se il nemico non ha un intervallo di movimento, non si muove
+            if (!enemy.moveInterval) return enemy;
+
+            // Controlla se è passato abbastanza tempo per la prossima mossa
+            if (currentTime - enemy.lastMoveTime < enemy.moveInterval) {
+                return enemy; // Non è ancora ora di muoversi
+            }
+
+            let nextPosition = { ...enemy.position };
+
+            // Logica di movimento basata sul comportamento
+            if (enemy.behavior === 'attivo' && canSeePlayer(enemy, gameState.playerPosition)) {
+                // Se vede il giocatore, si muove verso di lui
+                const playerPos = gameState.playerPosition;
+                if (Math.abs(playerPos.x - enemy.position.x) > Math.abs(playerPos.y - enemy.position.y)) {
+                    nextPosition.x += Math.sign(playerPos.x - enemy.position.x);
+                } else {
+                    nextPosition.y += Math.sign(playerPos.y - enemy.position.y);
+                }
+            }
+            // Qui potresti aggiungere: else if (enemy.behavior === 'sentinella') { ... }
+
+            // Controlla che la nuova posizione sia valida (non è un ostacolo)
+            const isObstacle = currentLevelData.obstacles.some(obs => obs.x === nextPosition.x && obs.y === nextPosition.y);
+            if (isObstacle) {
+                nextPosition = enemy.position; // Se c'è un ostacolo, annulla la mossa
+            }
+
+            // Controlla se il nemico ha catturato il giocatore
+            if (nextPosition.x === gameState.playerPosition.x && nextPosition.y === gameState.playerPosition.y) {
+                playerIsCaught = true;
+            }
+
+            return { ...enemy, position: nextPosition, lastMoveTime: currentTime };
+        });
+
+        // Aggiorna lo stato del gioco
+        setGameState(prev => ({
+            ...prev,
+            enemies: newEnemies,
+            isPlayerDead: prev.isPlayerDead || playerIsCaught, // Il giocatore muore se viene catturato
+        }));
+
+        if (playerIsCaught) {
+            toast({ title: "☠️ Preso!", description: "Un nemico ti ha raggiunto.", variant: "destructive" });
+        }
+
+    }, 200); // L'IA viene "pensata" ogni 200ms
+
+    return () => clearInterval(gameLoop); // Pulisce il loop quando il componente si smonta
+
+  }, [gameState, currentLevelData]); // L'effetto si ri-esegue se lo stato o il livello cambiano
+
+
+
 
   // <-- MODIFICA 2: Aggiungiamo una funzione di pulizia al nostro effetto
   useEffect(() => {
