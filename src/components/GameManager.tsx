@@ -52,6 +52,7 @@ const GameManager = () => {
             visionRange: e.visionRange,
             moveInterval: e.moveInterval,
             lastMoveTime: 0,
+            direction: "left",
         })) || [],
     };
   };
@@ -167,56 +168,86 @@ const handleLevelReset = useCallback(() => {
         setGameState(getInitialGameState(currentLevelData));
     }, [currentLevelData]);
 
-  // Game Loop AI (MODIFICATO per usare la griglia)
-  useEffect(() => {
-    const gameLoop = setInterval(() => {
-        if (gameState.gameWon || gameState.isPlayerDead) return;
+  // useEffect del Game Loop AI (AGGIORNATO)
+    useEffect(() => {
+      const gameLoop = setInterval(() => {
+          if (gameState.gameWon || gameState.isPlayerDead) return;
 
-        const currentTime = Date.now();
-        let playerIsCaught = false;
+          const currentTime = Date.now();
+          let playerIsCaught = false;
 
-        const newEnemies = gameState.enemies.map(enemy => {
-            if (!enemy.moveInterval || currentTime - enemy.lastMoveTime < enemy.moveInterval) {
-                return enemy;
-            }
+          const newEnemies = gameState.enemies.map(enemy => {
+              // Se non è ora di muoversi, non fare nulla
+              if (!enemy.moveInterval || currentTime - enemy.lastMoveTime < enemy.moveInterval) {
+                  return enemy;
+              }
 
-            let nextPosition = { ...enemy.position };
-            if (enemy.behavior === 'attivo' && canSeePlayer(enemy, gameState.playerPosition)) {
-                const playerPos = gameState.playerPosition;
-                if (Math.abs(playerPos.x - enemy.position.x) > Math.abs(playerPos.y - enemy.position.y)) {
-                    nextPosition.x += Math.sign(playerPos.x - enemy.position.x);
-                } else {
-                    nextPosition.y += Math.sign(playerPos.y - enemy.position.y);
-                }
-            }
+              // --- 1. CALCOLA LA MOSSA DESIDERATA ---
+              let desiredNextPosition = { ...enemy.position };
+              // (Qui inseriamo la logica di movimento che avevamo prima)
+              if (enemy.behavior === 'attivo' && canSeePlayer(enemy, gameState.playerPosition)) {
+                  const playerPos = gameState.playerPosition;
+                  if (Math.abs(playerPos.x - enemy.position.x) > Math.abs(playerPos.y - enemy.position.y)) {
+                      desiredNextPosition.x += Math.sign(playerPos.x - enemy.position.x);
+                  } else {
+                      desiredNextPosition.y += Math.sign(playerPos.y - enemy.position.y);
+                  }
+              } else {
+                  // Se il nemico non vede il giocatore, sta fermo e non fa nulla
+                  return enemy;
+              }
 
-            // Controlla la nuova posizione sulla griglia
-            if (currentLevelData.grid[nextPosition.y][nextPosition.x] === '#') {
-                nextPosition = enemy.position;
-            }
+              // --- 2. CALCOLA LA DIREZIONE DESIDERATA ---
+              let desiredDirection = enemy.direction;
+              if (desiredNextPosition.x > enemy.position.x) desiredDirection = 'right';
+              else if (desiredNextPosition.x < enemy.position.x) desiredDirection = 'left';
+              else if (desiredNextPosition.y > enemy.position.y) desiredDirection = 'down';
+              else if (desiredNextPosition.y < enemy.position.y) desiredDirection = 'up';
 
-            if (nextPosition.x === gameState.playerPosition.x && nextPosition.y === gameState.playerPosition.y) {
-                playerIsCaught = true;
-            }
+              // --- 3. LOGICA "GIRA O MUOVI" ---
+              let finalPosition = enemy.position;
+              const currentDirection = enemy.direction;
 
-            return { ...enemy, position: nextPosition, lastMoveTime: currentTime };
-        });
+              if (desiredDirection === currentDirection) {
+                  // Se già guarda nella direzione giusta, si MUOVE
+                  const isObstacle = currentLevelData.grid[desiredNextPosition.y][desiredNextPosition.x] === '#';
+                  if (!isObstacle) {
+                      finalPosition = desiredNextPosition;
+                  }
+              } else {
+                  // Se deve girarsi, si GIRA SOLTANTO. La posizione non cambia.
+                  // Questo "consuma" il suo turno.
+              }
 
-        if (newEnemies.some((e, i) => e.position.x !== gameState.enemies[i].position.x || e.position.y !== gameState.enemies[i].position.y) || playerIsCaught) {
-            setGameState(prev => ({
-                ...prev,
-                enemies: newEnemies,
-                isPlayerDead: prev.isPlayerDead || playerIsCaught,
-            }));
-        }
+              // Controlla se il nemico ha catturato il giocatore
+              if (finalPosition.x === gameState.playerPosition.x && finalPosition.y === gameState.playerPosition.y) {
+                  playerIsCaught = true;
+              }
 
-        if (playerIsCaught) {
-            toast({ title: "☠️ Preso!", description: "Un nemico ti ha raggiunto.", variant: "destructive" });
-        }
-    }, 200);
+              // Ritorna lo stato aggiornato del nemico
+              return {
+                ...enemy,
+                position: finalPosition,
+                direction: desiredDirection, // La direzione si aggiorna comunque
+                lastMoveTime: currentTime
+              };
+          });
 
-    return () => clearInterval(gameLoop);
-  }, [gameState, currentLevelData, toast]);
+          // Aggiorna lo stato del gioco solo se qualcosa è cambiato
+          if (newEnemies.some((e, i) => e.position.x !== gameState.enemies[i].position.x || e.position.y !== gameState.enemies[i].position.y || e.direction !== gameState.enemies[i].direction) || playerIsCaught) {
+              setGameState(prev => ({
+                  ...prev,
+                  enemies: newEnemies,
+                  isPlayerDead: prev.isPlayerDead || playerIsCaught,
+              }));
+          }
+
+          if (playerIsCaught) {
+              toast({ title: "☠️ Preso!", description: "Un nemico ti ha raggiunto.", variant: "destructive" });
+          }
+      }, 200);
+      return () => clearInterval(gameLoop);
+    }, [gameState, currentLevelData, toast]);
 
 // useEffect che gestisce il timer dopo la morte
 useEffect(() => {

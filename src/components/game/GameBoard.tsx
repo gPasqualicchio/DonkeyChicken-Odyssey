@@ -9,9 +9,25 @@ import treeSprite from "@/assets/tree-sprite.png";
 import keySprite from "@/assets/key_gold_SIMPLE.png";
 import portalSprite from "@/assets/portal_forest_1.png";
 import playerSprite from "@/assets/donkeychicken_M.png";
-import brucoSprite from "@/assets/ENEMY_bruco_1.png";
+import brucoSpriteDown from "@/assets/ENEMY_bruco_down.png"; // Rinominiamo l'esistente
+import brucoSpriteUp from "@/assets/ENEMY_bruco_up.png";
+import brucoSpriteLeft from "@/assets/ENEMY_bruco_left.png";
+import brucoSpriteRight from "@/assets/ENEMY_bruco_right.png";
 import pathHorizontalSprite from "@/assets/Forest_Path_Horizontal.png";
 import pathVerticalSprite from "@/assets/Forest_Path_Vertical.png";
+import pathCurve1Sprite from "@/assets/Forest_Path_Curve_1.png";
+import pathCurve2Sprite from "@/assets/Forest_Path_Curve_2.png";
+import pathCurve3Sprite from "@/assets/Forest_Path_Curve_3.png";
+import pathCurve4Sprite from "@/assets/Forest_Path_Curve_4.png";
+import pathClose1Sprite from "@/assets/Forest_Path_Close_1.png";
+import pathClose2Sprite from "@/assets/Forest_Path_Close_2.png";
+import pathClose3Sprite from "@/assets/Forest_Path_Close_3.png";
+import pathClose4Sprite from "@/assets/Forest_Path_Close_4.png";
+import pathT1Sprite from "@/assets/Forest_Path_T_1.png";
+import pathT2Sprite from "@/assets/Forest_Path_T_2.png";
+import pathT3Sprite from "@/assets/Forest_Path_T_3.png";
+import pathT4Sprite from "@/assets/Forest_Path_T_4.png";
+import pathCrossSprite from "@/assets/Forest_Path_Cross.png";
 
 // Import delle costanti globali
 import { GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, GAP_SIZE, SWIPE_THRESHOLD } from "@/config/Constants";
@@ -73,10 +89,47 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
   };
 
   const getPathSprite = (x: number, y: number) => {
-    const hasVerticalPath = isWalkable(x, y - 1) || isWalkable(x, y + 1);
-    if (hasVerticalPath) return pathVerticalSprite;
-    const hasHorizontalPath = isWalkable(x - 1, y) || isWalkable(x + 1, y);
-    if (hasHorizontalPath) return pathHorizontalSprite;
+    // Per prima cosa, controlliamo lo stato dei 4 vicini
+    const hasPathAbove = isWalkable(x, y - 1);
+    const hasPathBelow = isWalkable(x, y + 1);
+    const hasPathLeft = isWalkable(x - 1, y);
+    const hasPathRight = isWalkable(x + 1, y);
+
+    // --- LOGICA PER LE CURVE ---
+    // Curva Sud-Ovest (collega Sopra e Destra)
+    if (!hasPathAbove && !hasPathRight && hasPathBelow && hasPathLeft) {
+        return pathCurve1Sprite;
+    } else if (hasPathAbove && hasPathRight && !hasPathBelow && !hasPathLeft) {
+        return pathCurve3Sprite;
+    } else if (hasPathAbove && !hasPathRight && !hasPathBelow && hasPathLeft) {
+        return pathCurve2Sprite;
+    } else if (!hasPathAbove && hasPathRight && hasPathBelow && !hasPathLeft) {
+        return pathCurve4Sprite;
+    } else if (!hasPathAbove && !hasPathRight && !hasPathBelow && hasPathLeft) {
+        return pathClose1Sprite;
+    } else if (hasPathAbove && !hasPathRight && !hasPathBelow && !hasPathLeft) {
+        return pathClose2Sprite;
+    } else if (!hasPathAbove && hasPathRight && !hasPathBelow && !hasPathLeft) {
+        return pathClose3Sprite;
+    } else if (!hasPathAbove && !hasPathRight && hasPathBelow && !hasPathLeft) {
+        return pathClose4Sprite;
+    } else if (hasPathAbove && hasPathRight && !hasPathBelow && hasPathLeft) {
+        return pathT1Sprite;
+    } else if (hasPathAbove && hasPathRight && hasPathBelow && !hasPathLeft) {
+        return pathT2Sprite;
+    } else if (!hasPathAbove && hasPathRight && hasPathBelow && hasPathLeft) {
+        return pathT3Sprite;
+    } else if (hasPathAbove && !hasPathRight && hasPathBelow && hasPathLeft) {
+        return pathT4Sprite;
+    } else if (hasPathAbove && hasPathRight && hasPathBelow && hasPathLeft) {
+        return pathCrossSprite;
+    } else if (hasPathAbove || hasPathBelow) {
+      return pathVerticalSprite;
+    } else if (hasPathLeft || hasPathRight) {
+      return pathHorizontalSprite;
+    }
+
+    // Default se la casella è isolata
     return pathHorizontalSprite;
   };
 
@@ -169,22 +222,33 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
             </div>
           </div>
 
-          {/* NEMICI */}
+{/* NEMICI */}
           {gameState.enemies.map(enemy => {
               let currentEnemySprite;
+
+              // Questo switch sceglie lo sprite giusto in base a TIPO e DIREZIONE
               switch (enemy.type) {
                   case 'bruco':
-                      currentEnemySprite = brucoSprite;
+                      switch (enemy.direction) {
+                          case 'up': currentEnemySprite = brucoSpriteUp; break;
+                          case 'down': currentEnemySprite = brucoSpriteDown; break;
+                          case 'left': currentEnemySprite = brucoSpriteLeft; break;
+                          case 'right': currentEnemySprite = brucoSpriteRight; break;
+                          default: currentEnemySprite = brucoSpriteDown; break;
+                      }
                       break;
                   default:
-                      currentEnemySprite = brucoSprite;
+                      currentEnemySprite = brucoSpriteDown;
                       break;
               }
 
+              // ===== QUESTO È IL BLOCCO CORRETTO DA USARE =====
               return (
                 <div
                   key={enemy.id}
+                  // AGGIUNGI QUESTA CLASSE per il posizionamento e la transizione
                   className="absolute pointer-events-none transition-all duration-150 ease-out z-10"
+                  // AGGIUNGI QUESTO STYLE per calcolare la posizione
                   style={{
                     width: CELL_SIZE,
                     height: CELL_SIZE,

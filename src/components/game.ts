@@ -22,6 +22,8 @@ export type EnemyType = 'bruco'; // Aggiungeremo altri tipi qui
 
 export type EnemyBehavior = 'static' | 'sentinella' | 'attivo';
 
+export type MovementDirection = 'up' | 'down' | 'left' | 'right';
+
 export interface EnemyData {
   id: number;
   startPosition: Position;
@@ -35,9 +37,10 @@ export interface EnemyState {
   id: number;
   position: Position;
   type: EnemyType;
+  direction: Direction; // <-- SOSTITUISCE il vecchio direction numerico
   visionRange?: number;
   moveInterval?: number;
-  lastMoveTime: number; // <-- NUOVO: Per tracciare quando si è mosso l'ultima volta
+  lastMoveTime: number;
 }
 
 // Tipo per lo stato completo del gioco
