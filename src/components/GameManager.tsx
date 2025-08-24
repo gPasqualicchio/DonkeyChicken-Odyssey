@@ -36,30 +36,43 @@ const GameManager = () => {
     if (gameState.gameWon || gameState.isMoving) return;
 
     setGameState(prev => {
-      const newPosition = { ...prev.playerPosition };
-      switch (direction) {
-        case 'up': if (newPosition.y > 0) newPosition.y--; break;
-        case 'down': if (newPosition.y < GRID_HEIGHT - 1) newPosition.y++; break;
-        case 'left': if (newPosition.x > 0) newPosition.x--; break;
-        case 'right': if (newPosition.x < GRID_WIDTH - 1) newPosition.x++; break;
-      }
+        const newPosition = { ...prev.playerPosition };
 
-      if (newPosition.x === prev.playerPosition.x && newPosition.y === prev.playerPosition.y) return prev;
+        console.log("Direzione:", direction);
+        switch (direction) {
+          case "up":
+            if (newPosition.y > 0) newPosition.y--;
+            break;
+          case "down":
+            if (newPosition.y < GRID_HEIGHT - 1) newPosition.y++;
+            break;
+          case "left":
+            if (newPosition.x > 0) newPosition.x--;
+            break;
+          case "right":
+            if (newPosition.x < GRID_WIDTH - 1) newPosition.x++;
+            break;
+        }
 
-      const isObstacle = currentLevelData.obstacles.some(obs => obs.x === newPosition.x && obs.y === newPosition.y);
-      if (isObstacle) return prev;
+        if (newPosition.x === prev.playerPosition.x && newPosition.y === prev.playerPosition.y) return prev;
 
-      const isDoor = currentLevelData.doorPosition && newPosition.x === currentLevelData.doorPosition.x && newPosition.y === currentLevelData.doorPosition.y;
-      if (isDoor && !prev.hasKey) {
-        toast({ title: "Porta chiusa", description: "Trova la chiave per aprirla!" });
-        return prev;
-      }
+        const isObstacle = currentLevelData.obstacles.some(obs => obs.x === newPosition.x && obs.y === newPosition.y);
+        if (isObstacle) {
+            console.log("OSTACOLO! x:", newPosition.x, ", y:", newPosition.y);
+            return prev;
+        }
+
+        const isDoor = currentLevelData.doorPosition && newPosition.x === currentLevelData.doorPosition.x && newPosition.y === currentLevelData.doorPosition.y;
+        if (isDoor && !prev.hasKey) {
+            console.log("Porta chiusa, Trova la chiave per aprirla!");
+            return prev;
+        }
 
       let newHasKey = prev.hasKey;
       const isKey = currentLevelData.keyPosition && newPosition.x === currentLevelData.keyPosition.x && newPosition.y === currentLevelData.keyPosition.y;
       if (isKey && !prev.hasKey) {
         newHasKey = true;
-        toast({ title: "🔑 Chiave raccolta!", description: "Ora puoi aprire la porta." });
+        console.log("🔑 Chiave raccolta! Ora puoi aprire la porta.");
       }
 
       const gameWon = newPosition.x === currentLevelData.endPosition.x && newPosition.y === currentLevelData.endPosition.y;
