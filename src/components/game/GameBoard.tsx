@@ -1,122 +1,45 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { useToast } from "@/hooks/use-toast";
+// GameBoard.tsx
 
-// NUOVO: Importa le interfacce condivise
-import { Level, Position } from "@/types/game";
+import { useEffect, useRef } from "react";
+import { Level, Position, GameState } from "./types"; // Assumendo che i tipi siano in types.ts
 
-// --- URL pubblici per le immagini (per l'anteprima) ---
+// URL delle immagini e costanti di gioco
 import forestBackground from '@/assets/forest-background.jpg';
 import treeSprite from "@/assets/tree-sprite.png";
 import keySprite from "@/assets/key_gold_SIMPLE.png";
 import portalSprite from "@/assets/portal_forest_1.png";
 import playerSprite from "@/assets/donkeychicken_M.png";
 
-// Costanti di gioco (invariate)
 const GRID_WIDTH = 8;
 const GRID_HEIGHT = 7;
 const CELL_SIZE = 48;
 const GAP_SIZE = 0;
 const SWIPE_THRESHOLD = 30;
 
-// MODIFICATO: Lo stato interno ora contiene solo dati dinamici
-export interface GameState {
-  playerPosition: Position;
-  gameWon: boolean;
-  moveCount: number;
-  isMoving: boolean;
-  hasKey: boolean;
-}
-
-// NUOVO: Definisce le proprietà che il componente riceve
 interface GameBoardProps {
   level: Level;
-  onLevelComplete: () => void; // Funzione per notificare il genitore del completamento
+  gameState: GameState;
+  onPlayerMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
 }
 
-const GameBoard = ({ level, onLevelComplete }: GameBoardProps) => {
-  const { toast } = useToast();
-
-  // Funzione helper per creare lo stato iniziale basandosi sul livello passato come prop
-  const getInitialGameState = (currentLevel: Level): GameState => ({
-    playerPosition: currentLevel.startPosition,
-    gameWon: false,
-    moveCount: 0,
-    isMoving: false,
-    hasKey: false,
-  });
-
-  const [gameState, setGameState] = useState<GameState>(() => getInitialGameState(level));
+const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
   const touchStartRef = useRef<Position | null>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
-  // NUOVO: Questo Effetto resetta lo stato del gioco se il livello (prop) cambia
-  useEffect(() => {
-    setGameState(getInitialGameState(level));
-  }, [level]);
-
-
-  const movePlayer = useCallback((direction: 'up' | 'down' | 'left' | 'right') => {
-    if (gameState.gameWon || gameState.isMoving) return;
-
-    setGameState(prev => {
-      const newPosition = { ...prev.playerPosition };
-      switch (direction) {
-        case 'up': if (newPosition.y > 0) newPosition.y--; break;
-        case 'down': if (newPosition.y < GRID_HEIGHT - 1) newPosition.y++; break;
-        case 'left': if (newPosition.x > 0) newPosition.x--; break;
-        case 'right': if (newPosition.x < GRID_WIDTH - 1) newPosition.x++; break;
-      }
-
-      const hasMoved = newPosition.x !== prev.playerPosition.x || newPosition.y !== prev.playerPosition.y;
-      if (!hasMoved) return prev;
-
-      // MODIFICATO: I controlli ora usano i dati da `level` (passato via props)
-      const isObstacle = level.obstacles.some(obs => obs.x === newPosition.x && obs.y === newPosition.y);
-      if (isObstacle) return prev;
-
-      const isDoor = level.doorPosition && newPosition.x === level.doorPosition.x && newPosition.y === level.doorPosition.y;
-      if (isDoor && !prev.hasKey) {
-        toast({ title: "Porta chiusa", description: "Trova la chiave per aprirla!" });
-        return prev;
-      }
-
-      let newHasKey = prev.hasKey;
-
-      const isKey = level.keyPosition && newPosition.x === level.keyPosition.x && newPosition.y === level.keyPosition.y;
-      if (isKey && !prev.hasKey) { // Aggiunto !prev.hasKey per evitare di raccoglierla di nuovo
-        newHasKey = true;
-        toast({ title: "🔑 Chiave raccolta!", description: "Ora puoi aprire la porta." });
-      }
-
-      const gameWon = newPosition.x === level.endPosition.x && newPosition.y === level.endPosition.y;
-
-      return {
-        ...prev,
-        playerPosition: newPosition,
-        moveCount: prev.moveCount + 1,
-        gameWon,
-        isMoving: true,
-        hasKey: newHasKey,
-      };
-    });
-
-    setTimeout(() => setGameState(prev => ({ ...prev, isMoving: false })), 150);
-  }, [level, gameState.gameWon, gameState.isMoving, toast]);
-
-
+  // Gestione Input (invariata, chiama onPlayerMove)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat) return;
       switch (event.key) {
-        case 'ArrowUp': case 'w': movePlayer('up'); break;
-        case 'ArrowDown': case 's': movePlayer('down'); break;
-        case 'ArrowLeft': case 'a': movePlayer('left'); break;
-        case 'ArrowRight': case 'd': movePlayer('right'); break;
+        case 'ArrowUp': case 'w': onPlayerMove('up'); break;
+        case 'ArrowDown': case 's': onPlayerMove('down'); break;
+        case 'ArrowLeft': case 'a': onPlayerMove('left'); break;
+        case 'ArrowRight': case 'd': onPlayerMove('right'); break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [movePlayer]);
+  }, [onPlayerMove]);
 
   useEffect(() => {
     const gameArea = gameAreaRef.current;
@@ -127,11 +50,11 @@ const GameBoard = ({ level, onLevelComplete }: GameBoardProps) => {
       const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
       const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > SWIPE_THRESHOLD) movePlayer('right');
-        if (deltaX < -SWIPE_THRESHOLD) movePlayer('left');
+        if (deltaX > SWIPE_THRESHOLD) onPlayerMove('right');
+        if (deltaX < -SWIPE_THRESHOLD) onPlayerMove('left');
       } else {
-        if (deltaY > SWIPE_THRESHOLD) movePlayer('down');
-        if (deltaY < -SWIPE_THRESHOLD) movePlayer('up');
+        if (deltaY > SWIPE_THRESHOLD) onPlayerMove('down');
+        if (deltaY < -SWIPE_THRESHOLD) onPlayerMove('up');
       }
       touchStartRef.current = null;
     };
@@ -141,17 +64,9 @@ const GameBoard = ({ level, onLevelComplete }: GameBoardProps) => {
       gameArea.removeEventListener('touchstart', handleTouchStart);
       gameArea.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [movePlayer]);
+  }, [onPlayerMove]);
 
-  // MODIFICATO: Al completamento del livello, chiama la funzione onLevelComplete
-  useEffect(() => {
-    if (gameState.gameWon) {
-      toast({ title: `🎉 ${level.name} completato!`, description: 'Hai finito in ${gameState.moveCount} mosse!' });
-      setTimeout(onLevelComplete, 2000);
-    }
-  }, [gameState.gameWon, gameState.moveCount, level.name, onLevelComplete, toast]);
-
-  // MODIFICATO: Le funzioni di rendering ora usano `level` e `gameState`
+  // Le funzioni di rendering (invariate)
   const getCellType = (x: number, y: number) => {
     if (level.keyPosition && x === level.keyPosition.x && y === level.keyPosition.y && !gameState.hasKey) return 'key';
     if (level.doorPosition && x === level.doorPosition.x && y === level.doorPosition.y) return 'door';
@@ -161,17 +76,19 @@ const GameBoard = ({ level, onLevelComplete }: GameBoardProps) => {
     return 'floor';
   };
 
+  // <-- ECCO LA PARTE MANCANTE!
   const getCellContent = (cellType: string) => {
     switch (cellType) {
       case 'obstacle': return <img src={treeSprite} alt="Albero" className="w-10 h-10 object-contain" />;
-      case 'start': return 'A';
-      case 'end': return 'B';
+      case 'start': return 'A'; // Puoi sostituire con uno sprite se vuoi
+      case 'end': return 'B'; // Puoi sostituire con uno sprite se vuoi
       case 'key': return <img src={keySprite} alt="Chiave" className="w-10 h-10 object-contain" />;
       case 'door': return <img src={portalSprite} alt="Porta" className="w-10 h-10 object-contain" />;
       default: return '';
     }
   };
 
+  // <-- E ANCHE QUESTA!
   const getCellStyles = (cellType: string) => {
     const baseStyles = "border border-green-800/20 flex items-center justify-center text-2xl font-bold transition-all duration-300";
     switch (cellType) {
@@ -187,6 +104,7 @@ const GameBoard = ({ level, onLevelComplete }: GameBoardProps) => {
     }
   };
 
+  // Il JSX che renderizza il tutto (invariato)
   return (
     <div
       ref={gameAreaRef}
@@ -209,6 +127,7 @@ const GameBoard = ({ level, onLevelComplete }: GameBoardProps) => {
               const cellType = getCellType(x, y);
               return (
                 <div key={`${x}-${y}`} className={getCellStyles(cellType)} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}>
+                  {/* Questa riga usa getCellContent per disegnare gli oggetti */}
                   {getCellContent(cellType)}
                 </div>
               );
