@@ -233,7 +233,7 @@ return (
               width: CELL_SIZE,
               height: CELL_SIZE,
               left: gameState.playerPosition.x * (CELL_SIZE + GAP_SIZE),
-              top: gameState.playerPosition.y * (CELL_SIZE + GAP_SIZE),
+              top: gameState.playerPosition.y * (CELL_SIZE + GAP_SIZE) - 16,
               transform: gameState.isMoving ? 'scale(1.1)' : 'scale(1)',
               opacity: gameState.gameWon ? 0 : 1,
             }}
@@ -288,7 +288,7 @@ return (
                     width: CELL_SIZE,
                     height: CELL_SIZE,
                     left: enemy.position.x * (CELL_SIZE + GAP_SIZE),
-                    top: enemy.position.y * (CELL_SIZE + GAP_SIZE),
+                    top: enemy.position.y * (CELL_SIZE + GAP_SIZE) - 16,
                   }}
                 >
                   <div className="w-full h-full flex items-center justify-center">
