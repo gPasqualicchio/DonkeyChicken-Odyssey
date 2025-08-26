@@ -5,7 +5,6 @@ import { Level, Position, GameState, Direction } from '../../game';
 import { GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, GAP_SIZE, SWIPE_THRESHOLD } from "@/config/Constants";
 import { GameAssets } from "@/config/Assets";
 
-// Importa i nuovi componenti
 import GameCharacters from "./GameCharacters";
 import GameObjects from "./GameObjects";
 
@@ -105,12 +104,10 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
       if (cellChar === '#') return false;
       return true;
     };
-
     const hasPathAbove = isWalkableForPath(x, y - 1);
     const hasPathBelow = isWalkableForPath(x, y + 1);
     const hasPathLeft = isWalkableForPath(x - 1, y);
     const hasPathRight = isWalkableForPath(x + 1, y);
-
     if (!hasPathAbove && !hasPathRight && hasPathBelow && hasPathLeft) {
         return assets.tiles.path.curve1;
     } else if (hasPathAbove && hasPathRight && !hasPathBelow && !hasPathLeft) {
@@ -150,14 +147,18 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
     const keyAtPosition = level.keys.find(k => k.position.x === x && k.position.y === y);
     const doorAtPosition = level.doors.find(d => d.position.x === x && d.position.y === y);
     const enemyAtPosition = level.enemies.find(e => e.startPosition.x === x && e.startPosition.y === y);
+    const totemAtPosition = level.spittingTotems?.find(t => t.position.x === x && t.position.y === y);
     const playerAtPosition = level.startPosition && level.startPosition.x === x && level.startPosition.y === y;
+
     if (keyAtPosition && !gameState.hasKeyCollected.includes(keyAtPosition.id) && !gameState.isDoorUnlocked.includes(keyAtPosition.id)) return 'key';
     if (doorAtPosition && !gameState.isDoorUnlocked.includes(doorAtPosition.id)) return 'door';
     if (enemyAtPosition) return 'enemy';
+    if (totemAtPosition) return 'totem';
     if (playerAtPosition) return 'start';
     if (level.grid[y][x] === '#') return 'obstacle';
     if (level.grid[y][x] === 'E') return 'end';
     if (level.grid[y][x] === '-') return 'empty';
+
     return 'floor';
   };
 
@@ -180,6 +181,12 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
         const enemyAtPosition = level.enemies.find(e => e.startPosition.x === x && e.startPosition.y === y);
         if (enemyAtPosition) {
           return null;
+        }
+        return null;
+      case 'totem':
+        const totemAtPosition = level.spittingTotems?.find(t => t.position.x === x && t.position.y === y);
+        if (totemAtPosition) {
+            return null;
         }
         return null;
       case 'empty': return null;
@@ -253,84 +260,9 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
             })}
           </div>
 
-          <div
-            className="absolute pointer-events-none transition-all duration-150 ease-out z-20"
-            style={{
-              width: CELL_SIZE,
-              height: CELL_SIZE,
-              left: gameState.playerPosition.x * (CELL_SIZE + GAP_SIZE),
-              top: gameState.playerPosition.y * (CELL_SIZE + GAP_SIZE) - 20,
-              transform: gameState.isMoving ? 'scale(1.1)' : 'scale(1)',
-              opacity: gameState.gameWon ? 0 : 1,
-            }}
-          >
-            <div className="w-full h-full flex items-center justify-center">
-              {gameState.isPlayerDead ? (
-                <span className="text-4xl font-black text-red-600 drop-shadow-lg">X</span>
-              ) : (
-                (() => {
-                  let currentPlayerSprite;
-                  switch (gameState.playerDirection) {
-                    case "up": currentPlayerSprite = assets.player.up; break;
-                    case "down": currentPlayerSprite = assets.player.down; break;
-                    case "left": currentPlayerSprite = assets.player.left; break;
-                    case "right": currentPlayerSprite = assets.player.right; break;
-                    default: currentPlayerSprite = assets.player.down; break;
-                  }
-                  return (
-                    <img
-                      src={currentPlayerSprite}
-                      alt="Personaggio"
-                      className="w-11 h-11 object-contain drop-shadow-lg"
-                    />
-                  );
-                })()
-              )}
-            </div>
-          </div>
+          <GameCharacters gameState={gameState} assets={assets} />
+          <GameObjects level={level} gameState={gameState} assets={assets} />
 
-          {gameState.enemies.map(enemy => {
-            if (!enemy.isAlive) {
-              return null;
-            }
-            let currentEnemySprite;
-
-            switch (enemy.type) {
-              case 'bruco':
-                switch (enemy.direction) {
-                  case 'up': currentEnemySprite = assets.enemies.bruco.up; break;
-                  case 'down': currentEnemySprite = assets.enemies.bruco.down; break;
-                  case 'left': currentEnemySprite = assets.enemies.bruco.left; break;
-                  case 'right': currentEnemySprite = assets.enemies.bruco.right; break;
-                  default: currentEnemySprite = assets.enemies.bruco.down; break;
-                }
-                break;
-              default:
-                currentEnemySprite = assets.enemies.bruco.down;
-                break;
-            }
-
-            return (
-              <div
-                key={enemy.id}
-                className="absolute pointer-events-none transition-all duration-150 ease-out z-10"
-                style={{
-                  width: CELL_SIZE,
-                  height: CELL_SIZE,
-                  left: enemy.position.x * (CELL_SIZE + GAP_SIZE),
-                  top: enemy.position.y * (CELL_SIZE + GAP_SIZE) - 20,
-                }}
-              >
-                <div className="w-full h-full flex items-center justify-center">
-                  <img
-                    src={currentEnemySprite}
-                    alt={`Nemico ${enemy.type}`}
-                    className="w-10 h-10 object-contain drop-shadow-md"
-                  />
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
 

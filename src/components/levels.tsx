@@ -65,4 +65,60 @@ export const levels: Level[] = [
       "     #    ",
     ],
   },
+      /*
+           4 - Oh god, another caterpillar
+       */
+  {
+    id: 4,
+    name: "Oh god, another caterpillar",
+    keys: [{ id: 1, position: { x: 1, y: 2 } }], // End door key
+    doors: [{ id: 1, position: { x: 4, y: 5 }, type: 'key' }], // Corretto: la porta è un oggetto in un array
+    levers: [],
+    enemies: [ { id: 201, startPosition: { x: 1, y: 1 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
+    grid: [
+      "#####-----",
+      "#   ####--",
+      "# #    #--",
+      "### ## #--",
+      "#      #--",
+      "#P## ###--",
+      "####E#----",
+    ],
+  },
+      /*
+           6- Such a cool totem
+       */
+  {
+    id: 6,
+    name: "Such a cool totem",
+      spittingTotems: [
+        {
+          id: 1,
+          position: { x: 3, y: 0 },
+          direction: 'down',
+          isAlive: true,
+          lastShotTime: 0,
+        },
+        {
+          id: 2,
+          position: { x: 6, y: 0 },
+          direction: 'down',
+          isAlive: true,
+          lastShotTime: 0,
+        }
+      ],
+      keys: [],
+      doors: [],
+      levers: [],
+      enemies: [],
+    grid: [
+      "### ## ##-",
+      "P        #",
+      "### ## # #",
+      "--# ## # #",
+      "### ## # #",
+      "E        #",
+      "##########",
+    ],
+  },
 ];
