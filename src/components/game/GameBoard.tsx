@@ -146,6 +146,7 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
       case 'E': return 'end';
       case 'K': return gameState.hasKey ? 'floor' : 'key';
       case 'D': return 'door';
+      case '-': return 'empty';
       default: return 'floor';
     }
   };
@@ -156,12 +157,13 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
       case 'obstacle': return <img src={assets.tiles.obstacle} alt="Albero" className="w-10 h-10 object-contain" />;
       case 'key': return <img src={assets.tiles.key} alt="Chiave" className="w-10 h-10 object-contain" />;
       case 'door': return <img src={assets.tiles.portal} alt="Porta" className="w-10 h-10 object-contain" />;
+      case 'empty': return null;
       default: return null;
     }
   };
 
   const getCellStyles = (cellType: string) => {
-    const baseStyles = "border border-green-800/20 flex items-center justify-center text-2xl font-bold transition-all duration-300";
+    const baseStyles = "flex items-center justify-center text-2xl font-bold transition-all duration-300";
     switch (cellType) {
       case 'obstacle': return `${baseStyles} bg-green-900/30`;
       case 'start': return `${baseStyles} bg-transparent`; // Reso trasparente per vedere il percorso sotto
@@ -192,7 +194,7 @@ return (
       <div className="bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-lg p-2 shadow-2xl">
         <div className="relative">
 {/* GRIGLIA DISEGNATA CON I LIVELLI SEPARATI */}
-          <div className="grid grid-cols-10" style={{ gap: `${GAP_SIZE}px` }}>
+          <div className="grid grid-cols-10">
             {Array.from({ length: GRID_WIDTH * GRID_HEIGHT }).map((_, i) => {
               const x = i % GRID_WIDTH;
               const y = Math.floor(i / GRID_WIDTH);
@@ -208,8 +210,8 @@ return (
                     position: 'relative'
                   }}
                 >
-                  {/* CONDIZIONE: Disegna il percorso solo se NON è un ostacolo */}
-                  {cellType !== 'obstacle' && (
+                  {/* MODIFICATO: Disegna il percorso solo se NON è un ostacolo O una cella vuota */}
+                  {cellType !== 'obstacle' && cellType !== 'empty' && (
                     <img
                       src={getPathSprite(x, y)}
                       alt="Percorso"
@@ -217,7 +219,6 @@ return (
                     />
                   )}
 
-                  {/* Disegna gli OGGETTI (albero, chiave, etc.) sopra a tutto */}
                   <div className="relative z-10 w-full h-full flex items-center justify-center">
                     {getCellContent(cellType)}
                   </div>

@@ -13,13 +13,13 @@ export const levels: Level[] = [
     doorPosition: { x: 7, y: 2 },
     enemies: [],
     grid: [
-          "#####   ##", // La - è solo per leggibilità, puoi usare spazi
-          "##### # ##",
-          "##### #D##",
-          "P   # #E##",
-          "###   ####",
-          "##K# #####",
-          "##   #####",
+          "----#   #-", // La - è solo per leggibilità, puoi usare spazi
+          "----# # #-",
+          "##### #D#-",
+          "P   # #E#-",
+          "###   ###-",
+          "-#K# #----",
+          "##   #----",
     ],
   },
       /*
@@ -32,13 +32,13 @@ export const levels: Level[] = [
         { id: 201, startPosition: { x: 7, y: 4 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}
     ],
     grid: [
-      "##########", // La - è solo per leggibilità, puoi usare spazi
-      "#P########",
-      "# ##   ###",
+      "###-------", // La - è solo per leggibilità, puoi usare spazi
+      "#P######--",
+      "# ##   #--",
       "# ## # ###",
       "#       E#",
       "##########",
-      "##########",
+      "----------",
     ],
   },
   // ... puoi aggiungere qui fino al livello 100
