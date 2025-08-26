@@ -1,48 +1,21 @@
 // GameBoard.tsx
 
 import { useEffect, useRef } from "react";
-import { Level, Position, GameState } from '../../game';
-
-// URL delle immagini e costanti di gioco
-import forestBackground from '@/assets/forest-background.jpg';
-import treeSprite from "@/assets/tree-sprite.png";
-import keySprite from "@/assets/key_gold_SIMPLE.png";
-import portalSprite from "@/assets/portal_forest_1.png";
-import playerSpriteDown from "@/assets/donkeychicken_M_down.png";
-import playerSpriteUp from "@/assets/donkeychicken_M_up.png";
-import playerSpriteLeft from "@/assets/donkeychicken_M_left.png";
-import playerSpriteRight from "@/assets/donkeychicken_M_right.png";
-import brucoSpriteDown from "@/assets/ENEMY_bruco_down.png"; // Rinominiamo l'esistente
-import brucoSpriteUp from "@/assets/ENEMY_bruco_up.png";
-import brucoSpriteLeft from "@/assets/ENEMY_bruco_left.png";
-import brucoSpriteRight from "@/assets/ENEMY_bruco_right.png";
-import pathHorizontalSprite from "@/assets/Forest_Path_Horizontal.png";
-import pathVerticalSprite from "@/assets/Forest_Path_Vertical.png";
-import pathCurve1Sprite from "@/assets/Forest_Path_Curve_1.png";
-import pathCurve2Sprite from "@/assets/Forest_Path_Curve_2.png";
-import pathCurve3Sprite from "@/assets/Forest_Path_Curve_3.png";
-import pathCurve4Sprite from "@/assets/Forest_Path_Curve_4.png";
-import pathClose1Sprite from "@/assets/Forest_Path_Close_1.png";
-import pathClose2Sprite from "@/assets/Forest_Path_Close_2.png";
-import pathClose3Sprite from "@/assets/Forest_Path_Close_3.png";
-import pathClose4Sprite from "@/assets/Forest_Path_Close_4.png";
-import pathT1Sprite from "@/assets/Forest_Path_T_1.png";
-import pathT2Sprite from "@/assets/Forest_Path_T_2.png";
-import pathT3Sprite from "@/assets/Forest_Path_T_3.png";
-import pathT4Sprite from "@/assets/Forest_Path_T_4.png";
-import pathCrossSprite from "@/assets/Forest_Path_Cross.png";
-
-// Import delle costanti globali
+import { Level, Position, GameState, Direction } from '../../game';
 import { GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, GAP_SIZE, SWIPE_THRESHOLD } from "@/config/Constants";
+import { GameAssets } from "@/config/Assets"; // Importiamo il catalogo
+
+// Tipi per la nuova prop
+type SpriteCatalog = typeof GameAssets;
 
 interface GameBoardProps {
   level: Level;
   gameState: GameState;
   onDirectionChange: (direction: Direction | null) => void;
+  assets: SpriteCatalog; // <-- NUOVA PROP: riceve il catalogo
 }
 
-// CORRETTO: Aggiungi onDirectionChange tra le props
-const GameBoard = ({ level, gameState, onDirectionChange }: GameBoardProps) => {
+const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardProps) => {
   const touchStartRef = useRef<Position | null>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
@@ -114,56 +87,56 @@ const GameBoard = ({ level, gameState, onDirectionChange }: GameBoardProps) => {
     };
   }, [onDirectionChange]);
 
-  // Funzioni di Logica e Rendering (invariate)
+// Funzioni di rendering aggiornate per usare la prop `assets`
   const isWalkable = (x: number, y: number) => {
     if (y < 0 || y >= GRID_HEIGHT || x < 0 || x >= GRID_WIDTH) return false;
     return level.grid[y][x] !== '#';
   };
 
   const getPathSprite = (x: number, y: number) => {
-    // Per prima cosa, controlliamo lo stato dei 4 vicini
-    const hasPathAbove = isWalkable(x, y - 1);
-    const hasPathBelow = isWalkable(x, y + 1);
-    const hasPathLeft = isWalkable(x - 1, y);
-    const hasPathRight = isWalkable(x + 1, y);
+      // Per prima cosa, controlliamo lo stato dei 4 vicini
+      const hasPathAbove = isWalkable(x, y - 1);
+      const hasPathBelow = isWalkable(x, y + 1);
+      const hasPathLeft = isWalkable(x - 1, y);
+      const hasPathRight = isWalkable(x + 1, y);
 
-    // --- LOGICA PER LE CURVE ---
-    // Curva Sud-Ovest (collega Sopra e Destra)
-    if (!hasPathAbove && !hasPathRight && hasPathBelow && hasPathLeft) {
-        return pathCurve1Sprite;
-    } else if (hasPathAbove && hasPathRight && !hasPathBelow && !hasPathLeft) {
-        return pathCurve3Sprite;
-    } else if (hasPathAbove && !hasPathRight && !hasPathBelow && hasPathLeft) {
-        return pathCurve2Sprite;
-    } else if (!hasPathAbove && hasPathRight && hasPathBelow && !hasPathLeft) {
-        return pathCurve4Sprite;
-    } else if (!hasPathAbove && !hasPathRight && !hasPathBelow && hasPathLeft) {
-        return pathClose1Sprite;
-    } else if (hasPathAbove && !hasPathRight && !hasPathBelow && !hasPathLeft) {
-        return pathClose2Sprite;
-    } else if (!hasPathAbove && hasPathRight && !hasPathBelow && !hasPathLeft) {
-        return pathClose3Sprite;
-    } else if (!hasPathAbove && !hasPathRight && hasPathBelow && !hasPathLeft) {
-        return pathClose4Sprite;
-    } else if (hasPathAbove && hasPathRight && !hasPathBelow && hasPathLeft) {
-        return pathT1Sprite;
-    } else if (hasPathAbove && hasPathRight && hasPathBelow && !hasPathLeft) {
-        return pathT2Sprite;
-    } else if (!hasPathAbove && hasPathRight && hasPathBelow && hasPathLeft) {
-        return pathT3Sprite;
-    } else if (hasPathAbove && !hasPathRight && hasPathBelow && hasPathLeft) {
-        return pathT4Sprite;
-    } else if (hasPathAbove && hasPathRight && hasPathBelow && hasPathLeft) {
-        return pathCrossSprite;
-    } else if (hasPathAbove || hasPathBelow) {
-      return pathVerticalSprite;
-    } else if (hasPathLeft || hasPathRight) {
-      return pathHorizontalSprite;
-    }
+      // --- LOGICA PER LE CURVE ---
+      // Curva Sud-Ovest (collega Sopra e Destra)
+      if (!hasPathAbove && !hasPathRight && hasPathBelow && hasPathLeft) {
+          return assets.tiles.path.curve1;
+      } else if (hasPathAbove && hasPathRight && !hasPathBelow && !hasPathLeft) {
+          return assets.tiles.path.curve3;
+      } else if (hasPathAbove && !hasPathRight && !hasPathBelow && hasPathLeft) {
+          return assets.tiles.path.curve2;
+      } else if (!hasPathAbove && hasPathRight && hasPathBelow && !hasPathLeft) {
+          return assets.tiles.path.curve4;
+      } else if (!hasPathAbove && !hasPathRight && !hasPathBelow && hasPathLeft) {
+          return assets.tiles.path.close1;
+      } else if (hasPathAbove && !hasPathRight && !hasPathBelow && !hasPathLeft) {
+          return assets.tiles.path.close2;
+      } else if (!hasPathAbove && hasPathRight && !hasPathBelow && !hasPathLeft) {
+          return assets.tiles.path.close3;
+      } else if (!hasPathAbove && !hasPathRight && hasPathBelow && !hasPathLeft) {
+          return assets.tiles.path.close4;
+      } else if (hasPathAbove && hasPathRight && !hasPathBelow && hasPathLeft) {
+          return assets.tiles.path.t1;
+      } else if (hasPathAbove && hasPathRight && hasPathBelow && !hasPathLeft) {
+          return assets.tiles.path.t2;
+      } else if (!hasPathAbove && hasPathRight && hasPathBelow && hasPathLeft) {
+          return assets.tiles.path.t3;
+      } else if (hasPathAbove && !hasPathRight && hasPathBelow && hasPathLeft) {
+          return assets.tiles.path.t4;
+      } else if (hasPathAbove && hasPathRight && hasPathBelow && hasPathLeft) {
+          return assets.tiles.path.cross;
+      } else if (hasPathAbove || hasPathBelow) {
+        return assets.tiles.path.vertical;
+      } else if (hasPathLeft || hasPathRight) {
+        return assets.tiles.path.horizontal;
+      }
 
-    // Default se la casella è isolata
-    return pathHorizontalSprite;
-  };
+      // Default se la casella è isolata
+      return assets.tiles.path.horizontal;
+    };
 
   const getCellType = (x: number, y: number) => {
     const char = level.grid[y][x];
@@ -177,13 +150,12 @@ const GameBoard = ({ level, gameState, onDirectionChange }: GameBoardProps) => {
     }
   };
 
-  const getCellContent = (cellType: string) => { // Non servono più x e y qui
+  const getCellContent = (cellType: string) => {
     switch (cellType) {
-      case 'obstacle': return <img src={treeSprite} alt="Albero" className="w-10 h-10 object-contain" />;
-      case 'key': return <img src={keySprite} alt="Chiave" className="w-10 h-10 object-contain" />;
-      case 'door': return <img src={portalSprite} alt="Porta" className="w-10 h-10 object-contain" />;
-
-      // Il caso 'floor' ora non fa nulla, perché il percorso viene disegnato separatamente
+      // Usa il catalogo per gli sprite
+      case 'obstacle': return <img src={assets.tiles.obstacle} alt="Albero" className="w-10 h-10 object-contain" />;
+      case 'key': return <img src={assets.tiles.key} alt="Chiave" className="w-10 h-10 object-contain" />;
+      case 'door': return <img src={assets.tiles.portal} alt="Porta" className="w-10 h-10 object-contain" />;
       default: return null;
     }
   };
@@ -203,12 +175,12 @@ const GameBoard = ({ level, gameState, onDirectionChange }: GameBoardProps) => {
     }
   };
 
-  // Il JSX che renderizza il tutto
-  return (
+return (
     <div
       ref={gameAreaRef}
       className="min-h-screen w-full flex flex-col items-center justify-center gap-6 p-4 relative"
-      style={{ backgroundImage: `url(${forestBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+      // Usa il catalogo per lo sfondo
+      style={{ backgroundImage: `url(${assets.background.forest})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
     >
       <div className="absolute top-2 left-2 bg-black/60 text-white p-2 rounded-lg text-xs font-mono z-10">
         <p>Livello: {level.name}</p>
@@ -266,61 +238,52 @@ const GameBoard = ({ level, gameState, onDirectionChange }: GameBoardProps) => {
               opacity: gameState.gameWon ? 0 : 1,
             }}
           >
-            <div className="w-full h-full flex items-center justify-center">
-              {gameState.isPlayerDead ? (
-                <span className="text-4xl font-black text-red-600 drop-shadow-lg">
-                  X
-                </span>
-              ) : (
-                (() => {
-                  // Scegliamo lo sprite corretto in base alla direzione
-                  let currentPlayerSprite;
-                  switch (gameState.playerDirection) {
-                    case "up": currentPlayerSprite = playerSpriteUp; break;
-                    case "down": currentPlayerSprite = playerSpriteDown; break;
-                    case "left": currentPlayerSprite = playerSpriteLeft; break;
-                    case "right": currentPlayerSprite = playerSpriteRight; break;
-                    default: currentPlayerSprite = playerSpriteDown; break;
-                  }
-                  return (
-                    <img
-                      src={currentPlayerSprite}
-                      alt="Personaggio"
-                      className="w-11 h-11 object-contain drop-shadow-lg"
-                    />
-                  );
-                })()
-              )}
-            </div>
+                    <div className="w-full h-full flex items-center justify-center">
+                      {gameState.isPlayerDead ? (
+                        <span className="text-4xl font-black text-red-600 drop-shadow-lg">X</span>
+                      ) : (
+                        <img
+                          // Usa il catalogo per lo sprite del giocatore
+                          src={assets.player[gameState.playerDirection]}
+                          alt="Personaggio"
+                          className="w-11 h-11 object-contain drop-shadow-lg"
+                        />
+                      )}
+                    </div>
           </div>
 
-{/* NEMICI */}
-          {gameState.enemies.map(enemy => {
+      {/* NEMICI */}
+            {gameState.enemies.map(enemy => {
+              // Se il nemico non è vivo, non disegnarlo
+              if (!enemy.isAlive) {
+                return null;
+              }
+
               let currentEnemySprite;
 
               // Questo switch sceglie lo sprite giusto in base a TIPO e DIREZIONE
               switch (enemy.type) {
                   case 'bruco':
                       switch (enemy.direction) {
-                          case 'up': currentEnemySprite = brucoSpriteUp; break;
-                          case 'down': currentEnemySprite = brucoSpriteDown; break;
-                          case 'left': currentEnemySprite = brucoSpriteLeft; break;
-                          case 'right': currentEnemySprite = brucoSpriteRight; break;
-                          default: currentEnemySprite = brucoSpriteDown; break;
+                          case 'up': currentEnemySprite = assets.enemies.bruco.up; break;
+                          case 'down': currentEnemySprite = assets.enemies.bruco.down; break;
+                          case 'left': currentEnemySprite = assets.enemies.bruco.left; break;
+                          case 'right': currentEnemySprite = assets.enemies.bruco.right; break;
+                          default: currentEnemySprite = assets.enemies.bruco.down; break;
                       }
                       break;
+                  // Qui andranno gli altri nemici
                   default:
-                      currentEnemySprite = brucoSpriteDown;
+                      currentEnemySprite = assets.enemies.bruco.down;
                       break;
               }
 
-              // ===== QUESTO È IL BLOCCO CORRETTO DA USARE =====
+              // AGGIORNATO: Questo è il blocco corretto per posizionare il nemico
               return (
                 <div
                   key={enemy.id}
-                  // AGGIUNGI QUESTA CLASSE per il posizionamento e la transizione
                   className="absolute pointer-events-none transition-all duration-150 ease-out z-10"
-                  // AGGIUNGI QUESTO STYLE per calcolare la posizione
+                  // UTILIZZIAMO LE COORDINATE DEL NEMICO per posizionare lo sprite
                   style={{
                     width: CELL_SIZE,
                     height: CELL_SIZE,
@@ -337,8 +300,8 @@ const GameBoard = ({ level, gameState, onDirectionChange }: GameBoardProps) => {
                   </div>
                 </div>
               );
-            })
-          }
+            })}
+
         </div>
       </div>
     </div>
