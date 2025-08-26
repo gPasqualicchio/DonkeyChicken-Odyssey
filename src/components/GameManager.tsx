@@ -39,6 +39,8 @@ const GameManager = () => {
 
     return {
         playerPosition: startPos,
+        playerDirection: 'right',
+        lastMoveTime: Date.now(),
         gameWon: false,
         moveCount: 0,
         isMoving: false,
@@ -65,7 +67,11 @@ const GameManager = () => {
 
   // --- MODIFICATO: Ora controlla le collisioni sulla griglia ---
   const movePlayer = useCallback((direction: 'up' | 'down' | 'left' | 'right') => {
-    if (gameState.gameWon || gameState.isMoving || gameState.isPlayerDead) return;
+
+        const timeSinceLastMove = Date.now() - gameState.lastMoveTime;
+        const moveCooldown = 500; // 500ms = 0.5 secondi
+
+    if (gameState.gameWon || gameState.isMoving || gameState.isPlayerDead || timeSinceLastMove < moveCooldown) return;
 
     setGameState(prev => {
         const newPosition = { ...prev.playerPosition };
@@ -111,10 +117,12 @@ const GameManager = () => {
       return {
         ...prev,
         playerPosition: newPosition,
+        playerDirection: direction,
         moveCount: prev.moveCount + 1,
         gameWon,
         isMoving: true,
         hasKey: newHasKey,
+        lastMoveTime: Date.now(),
       };
     });
 

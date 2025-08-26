@@ -8,7 +8,10 @@ import forestBackground from '@/assets/forest-background.jpg';
 import treeSprite from "@/assets/tree-sprite.png";
 import keySprite from "@/assets/key_gold_SIMPLE.png";
 import portalSprite from "@/assets/portal_forest_1.png";
-import playerSprite from "@/assets/donkeychicken_M.png";
+import playerSpriteDown from "@/assets/donkeychicken_M_down.png";
+import playerSpriteUp from "@/assets/donkeychicken_M_up.png";
+import playerSpriteLeft from "@/assets/donkeychicken_M_left.png";
+import playerSpriteRight from "@/assets/donkeychicken_M_right.png";
 import brucoSpriteDown from "@/assets/ENEMY_bruco_down.png"; // Rinominiamo l'esistente
 import brucoSpriteUp from "@/assets/ENEMY_bruco_up.png";
 import brucoSpriteLeft from "@/assets/ENEMY_bruco_left.png";
@@ -145,15 +148,14 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
     }
   };
 
-  const getCellContent = (cellType: string, x: number, y: number) => {
+  const getCellContent = (cellType: string) => { // Non servono più x e y qui
     switch (cellType) {
       case 'obstacle': return <img src={treeSprite} alt="Albero" className="w-10 h-10 object-contain" />;
       case 'key': return <img src={keySprite} alt="Chiave" className="w-10 h-10 object-contain" />;
       case 'door': return <img src={portalSprite} alt="Porta" className="w-10 h-10 object-contain" />;
-      case 'floor':
-        const pathSprite = getPathSprite(x, y);
-        return <img src={pathSprite} alt="Percorso" className="w-full h-full object-cover" />;
-      default: return '';
+
+      // Il caso 'floor' ora non fa nulla, perché il percorso viene disegnato separatamente
+      default: return null;
     }
   };
 
@@ -188,25 +190,47 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
 
       <div className="bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-lg p-2 shadow-2xl">
         <div className="relative">
-          {/* GRIGLIA DISEGNATA UNA SOLA VOLTA E IN MODO CORRETTO */}
+{/* GRIGLIA DISEGNATA CON I LIVELLI SEPARATI */}
           <div className="grid grid-cols-10" style={{ gap: `${GAP_SIZE}px` }}>
             {Array.from({ length: GRID_WIDTH * GRID_HEIGHT }).map((_, i) => {
               const x = i % GRID_WIDTH;
               const y = Math.floor(i / GRID_WIDTH);
               const cellType = getCellType(x, y);
+
               return (
-                <div key={`${x}-${y}`} className={getCellStyles(cellType)} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}>
-                  {getCellContent(cellType, x, y)}
+                <div
+                  key={`${x}-${y}`}
+                  className={getCellStyles(cellType)}
+                  style={{
+                    width: `${CELL_SIZE}px`,
+                    height: `${CELL_SIZE}px`,
+                    position: 'relative'
+                  }}
+                >
+                  {/* CONDIZIONE: Disegna il percorso solo se NON è un ostacolo */}
+                  {cellType !== 'obstacle' && (
+                    <img
+                      src={getPathSprite(x, y)}
+                      alt="Percorso"
+                      className="absolute w-full h-full object-cover"
+                    />
+                  )}
+
+                  {/* Disegna gli OGGETTI (albero, chiave, etc.) sopra a tutto */}
+                  <div className="relative z-10 w-full h-full flex items-center justify-center">
+                    {getCellContent(cellType)}
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          {/* GIOCATORE */}
+{/* GIOCATORE */}
           <div
             className="absolute pointer-events-none transition-all duration-150 ease-out z-20"
             style={{
-              width: CELL_SIZE, height: CELL_SIZE,
+              width: CELL_SIZE,
+              height: CELL_SIZE,
               left: gameState.playerPosition.x * (CELL_SIZE + GAP_SIZE),
               top: gameState.playerPosition.y * (CELL_SIZE + GAP_SIZE),
               transform: gameState.isMoving ? 'scale(1.1)' : 'scale(1)',
@@ -215,9 +239,28 @@ const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
           >
             <div className="w-full h-full flex items-center justify-center">
               {gameState.isPlayerDead ? (
-                <span className="text-4xl font-black text-red-600 drop-shadow-lg">X</span>
+                <span className="text-4xl font-black text-red-600 drop-shadow-lg">
+                  X
+                </span>
               ) : (
-                <img src={playerSprite} alt="Personaggio" className="w-11 h-11 object-contain drop-shadow-lg" />
+                (() => {
+                  // Scegliamo lo sprite corretto in base alla direzione
+                  let currentPlayerSprite;
+                  switch (gameState.playerDirection) {
+                    case "up": currentPlayerSprite = playerSpriteUp; break;
+                    case "down": currentPlayerSprite = playerSpriteDown; break;
+                    case "left": currentPlayerSprite = playerSpriteLeft; break;
+                    case "right": currentPlayerSprite = playerSpriteRight; break;
+                    default: currentPlayerSprite = playerSpriteDown; break;
+                  }
+                  return (
+                    <img
+                      src={currentPlayerSprite}
+                      alt="Personaggio"
+                      className="w-11 h-11 object-contain drop-shadow-lg"
+                    />
+                  );
+                })()
               )}
             </div>
           </div>

@@ -37,7 +37,7 @@ export interface EnemyState {
   id: number;
   position: Position;
   type: EnemyType;
-  direction: Direction; // <-- SOSTITUISCE il vecchio direction numerico
+  direction: MovementDirection; // <-- SOSTITUISCE il vecchio direction numerico
   visionRange?: number;
   moveInterval?: number;
   lastMoveTime: number;
@@ -46,6 +46,8 @@ export interface EnemyState {
 // Tipo per lo stato completo del gioco
 export interface GameState {
   playerPosition: Position;
+  playerDirection: MovementDirection;
+  lastMoveTime: number; // Memorizzerà il timestamp dell'ultimo movimento
   gameWon: boolean;
   moveCount: number;
   isMoving: boolean;
