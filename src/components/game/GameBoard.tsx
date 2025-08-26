@@ -38,52 +38,81 @@ import { GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, GAP_SIZE, SWIPE_THRESHOLD } from "@
 interface GameBoardProps {
   level: Level;
   gameState: GameState;
-  onPlayerMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
+  onDirectionChange: (direction: Direction | null) => void;
 }
 
-const GameBoard = ({ level, gameState, onPlayerMove }: GameBoardProps) => {
+// CORRETTO: Aggiungi onDirectionChange tra le props
+const GameBoard = ({ level, gameState, onDirectionChange }: GameBoardProps) => {
   const touchStartRef = useRef<Position | null>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
-  // Gestione Input (invariato)
+  // Gestione Input
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat) return;
+      let direction: Direction | null = null;
       switch (event.key) {
-        case 'ArrowUp': case 'w': onPlayerMove('up'); break;
-        case 'ArrowDown': case 's': onPlayerMove('down'); break;
-        case 'ArrowLeft': case 'a': onPlayerMove('left'); break;
-        case 'ArrowRight': case 'd': onPlayerMove('right'); break;
+        case 'ArrowUp': case 'w': direction = 'up'; break;
+        case 'ArrowDown': case 's': direction = 'down'; break;
+        case 'ArrowLeft': case 'a': direction = 'left'; break;
+        case 'ArrowRight': case 'd': direction = 'right'; break;
       }
+      onDirectionChange(direction);
     };
+
+    const handleKeyUp = () => {
+      onDirectionChange(null);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onPlayerMove]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [onDirectionChange]);
 
   useEffect(() => {
     const gameArea = gameAreaRef.current;
     if (!gameArea) return;
-    const handleTouchStart = (e: TouchEvent) => { touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; };
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!touchStartRef.current) return;
-      const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
-      const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > SWIPE_THRESHOLD) onPlayerMove('right');
-        if (deltaX < -SWIPE_THRESHOLD) onPlayerMove('left');
-      } else {
-        if (deltaY > SWIPE_THRESHOLD) onPlayerMove('down');
-        if (deltaY < -SWIPE_THRESHOLD) onPlayerMove('up');
-      }
-      touchStartRef.current = null;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!touchStartRef.current) return;
+
+      const deltaX = e.touches[0].clientX - touchStartRef.current.x;
+      const deltaY = e.touches[0].clientY - touchStartRef.current.y;
+
+      let direction: Direction | null = null;
+      if (Math.abs(deltaX) > SWIPE_THRESHOLD || Math.abs(deltaY) > SWIPE_THRESHOLD) {
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          direction = deltaX > 0 ? 'right' : 'left';
+        } else {
+          direction = deltaY > 0 ? 'down' : 'up';
+        }
+      }
+      onDirectionChange(direction);
+    };
+
+    const handleTouchEnd = () => {
+      touchStartRef.current = null;
+      onDirectionChange(null);
+    };
+
     gameArea.addEventListener('touchstart', handleTouchStart);
+    gameArea.addEventListener('touchmove', handleTouchMove);
     gameArea.addEventListener('touchend', handleTouchEnd);
+    gameArea.addEventListener('touchcancel', handleTouchEnd);
+
     return () => {
       gameArea.removeEventListener('touchstart', handleTouchStart);
+      gameArea.removeEventListener('touchmove', handleTouchMove);
       gameArea.removeEventListener('touchend', handleTouchEnd);
+      gameArea.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [onPlayerMove]);
+  }, [onDirectionChange]);
 
   // Funzioni di Logica e Rendering (invariate)
   const isWalkable = (x: number, y: number) => {

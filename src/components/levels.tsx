@@ -29,7 +29,7 @@ export const levels: Level[] = [
     id: 2,
     name: "Il Bruco",
     enemies: [
-        { id: 201, startPosition: { x: 7, y: 4 }, type: 'bruco', behavior: 'attivo', visionRange: 4,  moveInterval: 1000}
+        { id: 201, startPosition: { x: 7, y: 4 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}
     ],
     grid: [
       "##########", // La - è solo per leggibilità, puoi usare spazi

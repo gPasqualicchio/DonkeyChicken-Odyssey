@@ -20,7 +20,7 @@ export interface Level {
 // Tipi specifici per i nemici
 export type EnemyType = 'bruco'; // Aggiungeremo altri tipi qui
 
-export type EnemyBehavior = 'static' | 'sentinella' | 'attivo';
+export type EnemyBehavior = 'static' | 'sentinella' | 'active' | 'smart_active';
 
 export type MovementDirection = 'up' | 'down' | 'left' | 'right';
 

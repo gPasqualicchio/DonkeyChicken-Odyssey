@@ -14,6 +14,14 @@ const GameManager = () => {
 
   const currentLevelData = levels[currentLevelIndex];
 
+    // NUOVO: Lo stato per tenere traccia della direzione premuta
+    const [pressedDirection, setPressedDirection] = useState<Direction | null>(null);
+
+    // NUOVO: La funzione per aggiornare lo stato `pressedDirection`
+    const handleDirectionChange = (direction: Direction | null) => {
+        setPressedDirection(direction);
+    };
+
   // --- MODIFICATO: Ora legge la griglia per inizializzare lo stato ---
   const getInitialGameState = (level: Level): GameState => {
     let startPos: Position = { x: 0, y: 0 };
@@ -58,6 +66,51 @@ const GameManager = () => {
         })) || [],
     };
   };
+
+
+
+  const findPath = (start: Position, end: Position, grid: string[]): Position[] => {
+    const queue: { pos: Position, path: Position[] }[] = [{ pos: start, path: [start] }];
+    const visited = new Set<string>();
+    visited.add(`${start.x},${start.y}`);
+
+    while (queue.length > 0) {
+      const { pos, path } = queue.shift()!;
+
+      if (pos.x === end.x && pos.y === end.y) {
+        return path; // Percorso trovato
+      }
+
+      // Prova a muoverti in tutte e 4 le direzioni ortogonali
+      const directions = [
+        { x: 0, y: -1 }, // Su
+        { x: 0, y: 1 },  // Giù
+        { x: -1, y: 0 }, // Sinistra
+        { x: 1, y: 0 }   // Destra
+      ];
+
+      for (const dir of directions) {
+        const nextPos = { x: pos.x + dir.x, y: pos.y + dir.y };
+        const posKey = `${nextPos.x},${nextPos.y}`;
+
+        if (
+          nextPos.x >= 0 && nextPos.x < GRID_WIDTH &&
+          nextPos.y >= 0 && nextPos.y < GRID_HEIGHT &&
+          grid[nextPos.y][nextPos.x] !== '#' &&
+          !visited.has(posKey)
+        ) {
+          visited.add(posKey);
+          queue.push({ pos: nextPos, path: [...path, nextPos] });
+        }
+      }
+    }
+
+    return []; // Nessun percorso trovato
+  };
+
+
+
+
 
   const [gameState, setGameState] = useState<GameState>(() => getInitialGameState(currentLevelData));
 
@@ -129,32 +182,79 @@ const GameManager = () => {
     setTimeout(() => setGameState(prev => ({ ...prev, isMoving: false })), 150);
   }, [currentLevelData, gameState, toast]);
 
-  // --- MODIFICATO: Ora la funzione di visione controlla gli ostacoli sulla griglia ---
+    // NUOVO: Questo effetto gestisce il movimento continuo
+    useEffect(() => {
+      let intervalId: NodeJS.Timeout;
+
+      const movePlayerContinuously = () => {
+          const timeSinceLastMove = Date.now() - gameState.lastMoveTime;
+          const moveCooldown = 500;
+
+          if (pressedDirection && timeSinceLastMove >= moveCooldown) {
+              movePlayer(pressedDirection);
+          }
+      };
+
+      intervalId = setInterval(movePlayerContinuously, 50);
+
+      return () => {
+          clearInterval(intervalId);
+      };
+    }, [pressedDirection, gameState.lastMoveTime, movePlayer]);
+
+// FUNZIONE DI VISTA DEI NEMICI (CORRETTA)
   const canSeePlayer = (enemy: EnemyState, playerPosition: Position): boolean => {
     const { position, visionRange } = enemy;
-    if (!visionRange) return false;
 
-    const grid = currentLevelData.grid;
+    // Log di base per debug
+    console.log(`Nemico ${enemy.id} a (${position.x}, ${position.y}) sta cercando di vedere il giocatore a (${playerPosition.x}, ${playerPosition.y})`);
 
-    if (position.y === playerPosition.y) {
-        const distance = Math.abs(position.x - playerPosition.x);
-        if (distance > visionRange) return false;
-        const dir = Math.sign(playerPosition.x - position.x);
-        for (let i = 1; i < distance; i++) {
-            if (grid[position.y][position.x + i * dir] === '#') return false;
+    // Calcola la distanza Manhatten
+    const distance = Math.abs(position.x - playerPosition.x) + Math.abs(position.y - playerPosition.y);
+    console.log(`Distanza Manhatten: ${distance}. Visione nemico: ${visionRange}`);
+
+    if (distance > visionRange) {
+        console.log("Giocatore fuori dal raggio visivo.");
+        return false;
+    }
+
+    // Controlla se c'è un ostacolo sulla linea di vista ortogonale
+    if (position.x === playerPosition.x) { // Linea di vista verticale
+      const startY = Math.min(position.y, playerPosition.y) + 1;
+      const endY = Math.max(position.y, playerPosition.y);
+      for (let y = startY; y < endY; y++) {
+        if (currentLevelData.grid[y][position.x] === '#') {
+          console.log(`Linea di vista verticale bloccata da ostacolo a (${position.x}, ${y})`);
+          return false;
         }
+      }
+      console.log("Vista verticale libera.");
+      return true;
+    }
+
+    if (position.y === playerPosition.y) { // Linea di vista orizzontale
+      const startX = Math.min(position.x, playerPosition.x) + 1;
+      const endX = Math.max(position.x, playerPosition.x);
+      for (let x = startX; x < endX; x++) {
+        if (currentLevelData.grid[position.y][x] === '#') {
+          console.log(`Linea di vista orizzontale bloccata da ostacolo a (${x}, ${position.y})`);
+          return false;
+        }
+      }
+      console.log("Vista orizzontale libera.");
+      return true;
+    }
+
+    // NUOVO: La logica del nemico 'smart_active' non si basa solo sulla vista ortogonale
+    // Se il nemico è smart, consideriamo la distanza Manhatten come sufficiente
+    // a meno che ci sia un ostacolo direttamente sulla linea di mira, che abbiamo già controllato
+    // per ora questo è sufficiente. Il nemico smart non ha bisogno di vedere in linea retta per calcolare la mossa migliore.
+    if (enemy.behavior === 'smart_active') {
+        console.log("Nemico smart_active vede il giocatore in diagonale.");
         return true;
     }
 
-    if (position.x === playerPosition.x) {
-        const distance = Math.abs(position.y - playerPosition.y);
-        if (distance > visionRange) return false;
-        const dir = Math.sign(playerPosition.y - position.y);
-        for (let i = 1; i < distance; i++) {
-            if (grid[position.y + i * dir][position.x] === '#') return false;
-        }
-        return true;
-    }
+    console.log("Il giocatore non è sulla linea di vista.");
     return false;
   };
 
@@ -190,20 +290,37 @@ const handleLevelReset = useCallback(() => {
                   return enemy;
               }
 
-              // --- 1. CALCOLA LA MOSSA DESIDERATA ---
-              let desiredNextPosition = { ...enemy.position };
-              // (Qui inseriamo la logica di movimento che avevamo prima)
-              if (enemy.behavior === 'attivo' && canSeePlayer(enemy, gameState.playerPosition)) {
-                  const playerPos = gameState.playerPosition;
-                  if (Math.abs(playerPos.x - enemy.position.x) > Math.abs(playerPos.y - enemy.position.y)) {
-                      desiredNextPosition.x += Math.sign(playerPos.x - enemy.position.x);
-                  } else {
-                      desiredNextPosition.y += Math.sign(playerPos.y - enemy.position.y);
-                  }
-              } else {
-                  // Se il nemico non vede il giocatore, sta fermo e non fa nulla
-                  return enemy;
-              }
+// --- 1. CALCOLA LA MOSSA DESIDERATA (MODIFICATO) ---
+let desiredNextPosition = { ...enemy.position };
+const playerPos = gameState.playerPosition;
+
+// Se il nemico è 'active' o 'smart_active' e il giocatore è nel suo raggio di azione
+const isPlayerInVision = Math.abs(playerPos.x - enemy.position.x) + Math.abs(playerPos.y - enemy.position.y) <= enemy.visionRange;
+
+if ((enemy.behavior === 'active' || enemy.behavior === 'smart_active') && isPlayerInVision) {
+  if (enemy.behavior === 'active') {
+    // Logica per il nemico 'active' (movimento solo ortogonale, come prima)
+    if (Math.abs(playerPos.x - enemy.position.x) > Math.abs(playerPos.y - enemy.position.y)) {
+      desiredNextPosition.x += Math.sign(playerPos.x - enemy.position.x);
+    } else {
+      desiredNextPosition.y += Math.sign(playerPos.y - enemy.position.y);
+    }
+  } else if (enemy.behavior === 'smart_active') {
+    // NUOVO: Logica per il nemico 'smart_active' che usa il pathfinding
+    const path = findPath(enemy.position, playerPos, currentLevelData.grid);
+    if (path.length > 1) { // Il percorso è stato trovato (lunghezza > 1 perché il primo elemento è la posizione di partenza)
+      desiredNextPosition = path[1]; // Muoviti alla prossima casella del percorso
+      console.log(`Nemico ${enemy.id} (smart_active) ha trovato un percorso.`);
+    } else {
+      // Nessun percorso trovato, il nemico sta fermo
+      console.log(`Nemico ${enemy.id} (smart_active) non ha trovato un percorso. Sta fermo.`);
+      return enemy;
+    }
+  }
+} else {
+  // Se il nemico non vede il giocatore (o è 'static'/'sentinella'), sta fermo
+  return enemy;
+}
 
               // --- 2. CALCOLA LA DIREZIONE DESIDERATA ---
               let desiredDirection = enemy.direction;
@@ -315,6 +432,7 @@ useEffect(() => {
       level={currentLevelData}
       gameState={gameState}
       onPlayerMove={movePlayer}
+      onDirectionChange={handleDirectionChange}
     />
   );
 };
