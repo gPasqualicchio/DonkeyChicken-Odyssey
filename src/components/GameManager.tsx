@@ -10,6 +10,10 @@ import { GRID_WIDTH, GRID_HEIGHT } from "@/config/Constants";
 import { getInitialGameState, findPath } from "@/utils/gameUtils";
 import { GameAssets } from "@/config/Assets";
 
+interface GameManagerProps {
+    startAudio: boolean; // Indica se l'audio può partire
+}
+
 const GameManager = () => {
   const { toast } = useToast();
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
@@ -199,16 +203,6 @@ const GameManager = () => {
     return () => clearTimeout(timerId);
   }, [gameState.gameWon, handleNextLevel]);
 
-  // EFFETTO: Gestione audio
-  useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio('/audio/START_Adventure_Groove.mp3');
-      audioRef.current.loop = true;
-      audioRef.current.volume = 0.5;
-    }
-    audioRef.current.play().catch(error => console.warn("La riproduzione automatica della musica è stata bloccata dal browser.", error));
-    return () => audioRef.current?.pause();
-  }, []);
 
   return (
     <GameBoard

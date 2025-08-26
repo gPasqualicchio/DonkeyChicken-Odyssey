@@ -1,3 +1,5 @@
+// src/components/game/MainMenu.tsx
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 
@@ -5,7 +7,7 @@ import mainMenuBackground from '@/assets/SfondoCiuco1.png';
 import titleImage from '@/assets/MainPageTitle3.png';
 
 interface MainMenuProps {
-  onStartNewGame: () => void;
+  onStartNewGame: () => void; // L'interfaccia è corretta
 }
 
 const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
@@ -26,7 +28,6 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
     };
   }, []);
 
-  // Classi per il contenitore principale che cambiano allineamento
   const mainContainerClasses = `
     absolute inset-0 w-full h-full flex flex-col p-8 transition-all duration-1000
     ${animationState === 'loaded' ? 'items-start justify-end' : 'items-center justify-center'}
@@ -34,7 +35,6 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden bg-black">
-      {/* SFONDO DEL MENU (che appare con dissolvenza) */}
       <div
         className="absolute inset-0 w-full h-full transition-opacity duration-1000"
         style={{
@@ -44,13 +44,7 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
           opacity: animationState === 'loaded' ? 1 : 0,
         }}
       />
-
-      {/* CONTENITORE PER GLI ELEMENTI ANIMATI */}
-      {/* 1. MODIFICA: L'allineamento cambia da 'center' a 'start' (sinistra) */}
       <div className={mainContainerClasses}>
-
-        {/* BOTTONI DEL MENU (ora allineati a sinistra) */}
-        {/* Vengono renderizzati prima del logo per il controllo z-index, ma appaiono dopo */}
         <div
           className={`
             flex flex-col gap-4 w-full max-w-xs
@@ -59,6 +53,7 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
           `}
         >
           <Button
+            // CORRETTO: Chiamiamo la prop onStartNewGame
             onClick={onStartNewGame}
             className="text-lg py-6 bg-green-600/80 hover:bg-green-500/80 shadow-lg border-green-400/50"
           >
@@ -72,9 +67,6 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
           </Button>
         </div>
       </div>
-
-      {/* SFONDO NERO INIZIALE (che scompare) */}
-      {/* Questo `div` sta sopra lo sfondo del menu ma sotto il logo */}
       <div
         className={`
           absolute inset-0 w-full h-full bg-black z-10
@@ -82,9 +74,6 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
           ${animationState === 'loaded' ? 'opacity-0 pointer-events-none' : 'opacity-100'}
         `}
       />
-
-      {/* IMMAGINE DEL TITOLO ANIMATA (Sopra tutto) */}
-      {/* 2. MODIFICA: Animazione e posizione finale a sinistra */}
       <img
         src={titleImage}
         alt="DonkeyChicken Odyssey Title"

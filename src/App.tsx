@@ -1,68 +1,48 @@
 // src/App.tsx
 import { useState, useEffect } from "react";
-
 import MainMenu from "./components/game/MainMenu";
+import StartupScreen from './StartupScreen';
 import GameManager from "./components/GameManager";
 import { audio } from "./audio/AudioManager";
 
-type Screen = "menu" | "game";
+// Importa direttamente il file audio dalla sua posizione
+import backgroundMusic from "/audio/START_Adventure_Groove.mp3";
+import gameMusic from "/audio/CiucoForestThemeSong.mp3";
 
-function App() {
-  const [screen, setScreen] = useState<Screen>("menu");
-
-  const startGame = () => setScreen("game");
+const App = () => {
+  const [screenState, setScreenState] = useState('startup');
 
   useEffect(() => {
-    audio.add("menu", "/audio/START_Adventure_Groove.mp3");
-    audio.add("level1", "/audio/START_Adventure_Groove.mp3");
-
-    const onFirstUnlock = async () => {
-      removeUnlockers();
-      try {
-        console.log("[App] First user gesture → unlocking audio");
-        await audio.play("menu", { volume: 0.55, fadeMs: 700 });
-      } catch (err) {
-        console.error("[App] Even after unlock, audio failed", err);
-      }
-    };
-
-    const addUnlockers = () => {
-      window.addEventListener("pointerdown", onFirstUnlock, { once: true });
-      window.addEventListener("keydown", onFirstUnlock, { once: true });
-      document.addEventListener("visibilitychange", onFirstUnlock, { once: true });
-    };
-
-    const removeUnlockers = () => {
-      window.removeEventListener("pointerdown", onFirstUnlock);
-      window.removeEventListener("keydown", onFirstUnlock);
-      document.removeEventListener("visibilitychange", onFirstUnlock);
-    };
-
-    const tryStartMenu = async () => {
-      try {
-        console.log("[App] Trying autoplay of menu music…");
-        await audio.play("menu", { volume: 0.55, fadeMs: 700 });
-        removeUnlockers();
-      } catch {
-        console.log("[App] Autoplay blocked, waiting for first user gesture");
-        addUnlockers();
-      }
-    };
-
-    void tryStartMenu();
-
-    return () => {
-      removeUnlockers();
-      // opzionale: audio.stopAll();
-    };
+    console.log("[App.tsx] Caricamento iniziale...");
+    audio.add('MainMenu_Theme', backgroundMusic);
+    audio.add('CiucoForest_Theme', gameMusic);
   }, []);
 
+  const handleShowMainMenu = () => {
+    console.log("[App.tsx] Transizione a MainMenu.");
+    setScreenState('mainMenu');
+  };
+
+  const handleStartGame = () => {
+    console.log("[App.tsx] Avvio del gioco.");
+    audio.stop('MainMenu_Theme');
+    audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
+    setScreenState('game');
+  };
+
   return (
-    <main className="min-h-screen w-full">
-      {screen === "menu" && <MainMenu onStartNewGame={startGame} />}
-      {screen === "game" && <GameManager />}
-    </main>
+    <div className="App">
+      {screenState === 'startup' && (
+        <StartupScreen onStart={handleShowMainMenu} />
+      )}
+      {screenState === 'mainMenu' && (
+        <MainMenu onStartNewGame={handleStartGame} />
+      )}
+      {screenState === 'game' && (
+        <GameManager />
+      )}
+    </div>
   );
-}
+};
 
 export default App;
