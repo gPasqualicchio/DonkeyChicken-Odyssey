@@ -266,13 +266,25 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
         </div>
       </div>
 
-      {gameState.hasKeyCollected.length > 0 && (
-        <div className="absolute bottom-4 left-4 p-2 bg-black/60 rounded-lg z-30 flex items-center gap-2">
-          {gameState.hasKeyCollected.map(keyId => (
-            <img key={keyId} src={assets.tiles.key} alt={`Chiave ${keyId}`} className="w-10 h-10 object-contain" />
-          ))}
-        </div>
-      )}
+{(() => {
+    // 1. Filtra le chiavi da mostrare nell'inventario
+    const keysToShowInInventory = gameState.hasKeyCollected.filter(
+      keyId => !gameState.isDoorUnlocked.includes(keyId)
+    );
+
+    // 2. Mostra l'inventario solo se ci sono chiavi attive da visualizzare
+    if (keysToShowInInventory.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="absolute bottom-4 left-4 p-2 bg-black/60 rounded-lg z-30 flex items-center gap-2">
+        {keysToShowInInventory.map(keyId => (
+          <img key={keyId} src={assets.tiles.key} alt={`Chiave ${keyId}`} className="w-10 h-10 object-contain" />
+        ))}
+      </div>
+    );
+})()}
     </div>
   );
 };

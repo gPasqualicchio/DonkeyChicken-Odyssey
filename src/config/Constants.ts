@@ -10,3 +10,9 @@ export const PLAYER_HITBOX_RADIUS = 18; // es. se la cella è 48px, un raggio di
 export const PROJECTILE_HITBOX_RADIUS = 10; // I proiettili di solito hanno una hitbox più piccola del loro sprite
 
 export const IS_DEBUG_MODE = true;
+
+export const FIRE_INTERVAL = 2000;
+export const PROJECTILE_SPEED = 2;
+export const MOVE_DURATION = 150;
+export const MOVE_COOLDOWN = 500;
+export const ENEMY_MOVE_INTERVAL = 200;
