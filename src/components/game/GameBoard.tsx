@@ -5,6 +5,10 @@ import { Level, Position, GameState, Direction } from '../../game';
 import { GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, GAP_SIZE, SWIPE_THRESHOLD } from "@/config/Constants";
 import { GameAssets } from "@/config/Assets";
 
+// Importa i nuovi componenti
+import GameCharacters from "./GameCharacters";
+import GameObjects from "./GameObjects";
+
 type SpriteCatalog = typeof GameAssets;
 
 interface GameBoardProps {
@@ -88,11 +92,9 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
   const isWalkable = (x: number, y: number) => {
     if (y < 0 || y >= GRID_HEIGHT || x < 0 || x >= GRID_WIDTH) return false;
     const cellChar = level.grid[y][x];
-
     if (cellChar === '#') return false;
     const doorAtPosition = level.doors.find(d => d.position.x === x && d.position.y === y);
     if (doorAtPosition && !gameState.isDoorUnlocked.includes(doorAtPosition.id)) return false;
-
     return true;
   };
 
@@ -100,9 +102,7 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
     const isWalkableForPath = (x: number, y: number) => {
       if (y < 0 || y >= GRID_HEIGHT || x < 0 || x >= GRID_WIDTH) return false;
       const cellChar = level.grid[y][x];
-
       if (cellChar === '#') return false;
-
       return true;
     };
 
@@ -151,7 +151,6 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
     const doorAtPosition = level.doors.find(d => d.position.x === x && d.position.y === y);
     const enemyAtPosition = level.enemies.find(e => e.startPosition.x === x && e.startPosition.y === y);
     const playerAtPosition = level.startPosition && level.startPosition.x === x && level.startPosition.y === y;
-
     if (keyAtPosition && !gameState.hasKeyCollected.includes(keyAtPosition.id) && !gameState.isDoorUnlocked.includes(keyAtPosition.id)) return 'key';
     if (doorAtPosition && !gameState.isDoorUnlocked.includes(doorAtPosition.id)) return 'door';
     if (enemyAtPosition) return 'enemy';
@@ -159,7 +158,6 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
     if (level.grid[y][x] === '#') return 'obstacle';
     if (level.grid[y][x] === 'E') return 'end';
     if (level.grid[y][x] === '-') return 'empty';
-
     return 'floor';
   };
 
