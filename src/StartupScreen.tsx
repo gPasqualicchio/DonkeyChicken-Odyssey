@@ -20,7 +20,7 @@ const StartupScreen = ({ onStart }: StartupScreenProps) => {
     // Dopo che la transizione è finita, passa alla schermata successiva
     setTimeout(() => {
         onStart();
-    }, 1000); // La durata del timeout deve corrispondere alla durata della transizione CSS
+    }, 2000); // La durata del timeout deve corrispondere alla durata della transizione CSS
   };
 
   useEffect(() => {

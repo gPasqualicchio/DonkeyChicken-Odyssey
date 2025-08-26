@@ -12,19 +12,48 @@ import gameMusic from "/audio/CiucoForestThemeSong.mp3";
 const App = () => {
   const [screenState, setScreenState] = useState('startup');
 
+  // Gestione dell'audio in base al ciclo di vita dell'app
   useEffect(() => {
-    console.log("[App.tsx] Caricamento iniziale...");
+    // Usa la variabile importata, che contiene il percorso corretto
     audio.add('MainMenu_Theme', backgroundMusic);
     audio.add('CiucoForest_Theme', gameMusic);
   }, []);
 
+  // NUOVO: Gestore per gli eventi di visibilità della pagina
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // La pagina è in background, ferma tutto l'audio
+        audio.stopAll();
+        console.log("Audio fermato: la pagina è in background.");
+      } else {
+        // La pagina è tornata in primo piano, riavvia l'audio corretto
+        if (screenState === 'mainMenu') {
+          audio.play('MainMenu_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
+          console.log("Audio riavviato: MainMenu_Theme.");
+        } else if (screenState === 'game') {
+          audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
+          console.log("Audio riavviato: CiucoForest_Theme.");
+        }
+      }
+    };
+
+    // Aggiunge l'event listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup: rimuove l'event listener quando il componente si smonta
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [screenState]); // Aggiungi screenState alle dipendenze per rilevare i cambi di schermata
+
+  // La funzione per mostrare il MainMenu
   const handleShowMainMenu = () => {
-    console.log("[App.tsx] Transizione a MainMenu.");
     setScreenState('mainMenu');
   };
 
   const handleStartGame = () => {
-    console.log("[App.tsx] Avvio del gioco.");
+    // Prima di avviare il gioco, ferma la musica del menu e avvia quella del gioco
     audio.stop('MainMenu_Theme');
     audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
     setScreenState('game');

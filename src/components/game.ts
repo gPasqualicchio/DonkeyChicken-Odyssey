@@ -15,6 +15,10 @@ export interface Level {
   keyPosition?: Position;
   doorPosition?: Position;
   enemies?: EnemyData[];
+    keys: Key[];           // Aggiorna a un array di chiavi
+    doors: Door[];         // Aggiorna a un array di porte
+    levers: Lever[];       // Aggiungi le leve
+    grid: string[];
 }
 
 // Tipi specifici per i nemici
@@ -43,15 +47,36 @@ export interface EnemyState {
   lastMoveTime: number;
 }
 
-// Tipo per lo stato completo del gioco
+export interface Key {
+  position: Position;
+  id: number; // Aggiungi un ID univoco
+}
+
+export interface Door {
+  position: Position;
+  id: number; // Aggiungi un ID univoco, che si abbina a una chiave o a una leva
+  type: 'key' | 'lever'; // Tipo di porta
+}
+
+export interface Lever {
+  position: Position;
+  id: number; // Aggiungi un ID univoco, che si abbina a una porta
+  isPressed: boolean; // Stato della leva
+}
+
 export interface GameState {
   playerPosition: Position;
-  playerDirection: MovementDirection;
-  lastMoveTime: number; // Memorizzerà il timestamp dell'ultimo movimento
+  playerDirection: Direction;
+  lastMoveTime: number;
   gameWon: boolean;
   moveCount: number;
   isMoving: boolean;
-  hasKey: boolean;
   isPlayerDead: boolean;
   enemies: EnemyState[];
+  hasKeyCollected: boolean;   // <-- Chiave nell'inventario del giocatore
+  isDoorUnlocked: boolean;    // <-- Stato della porta
+    hasKeyCollected: number[]; // <-- MODIFICATO: ora è un array di ID di chiavi
+    isDoorUnlocked: number[]; // <-- MODIFICATO: ora è un array di ID di porte sbloccate
+
+    isLeverPressed: number | null;  // Aggiungi lo stato della leva
 }

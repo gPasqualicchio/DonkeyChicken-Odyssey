@@ -1,21 +1,19 @@
 // GameManager.tsx
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useToast } from "@/hooks/use-toast";
+// Rimosso: useToast non serve più
 import GameBoard from "./game/GameBoard";
 import { levels } from './levels';
 import { Level, GameState, Position, Direction, EnemyState } from './game';
 import { GRID_WIDTH, GRID_HEIGHT } from "@/config/Constants";
-// Aggiorna l'import per usare la versione corretta da gameUtils
-import { getInitialGameState, findPath } from "@/utils/gameUtils";
+import { getInitialGameState as getBaseInitialGameState, findPath } from "@/utils/gameUtils";
 import { GameAssets } from "@/config/Assets";
+import { Button } from "@/components/ui/button";
 
-interface GameManagerProps {
-    startAudio: boolean; // Indica se l'audio può partire
-}
+import iconsSprite from '@/assets/icons/Icons_InGame.png';
 
 const GameManager = () => {
-  const { toast } = useToast();
+  // Rimosso: useToast non serve più
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -23,14 +21,20 @@ const GameManager = () => {
 
   const [pressedDirection, setPressedDirection] = useState<Direction | null>(null);
 
-  // CORRETTO: Chiamiamo la funzione importata all'interno di useState.
+  const getInitialGameState = useCallback((level: Level): GameState => {
+    const baseState = getBaseInitialGameState(level);
+    return {
+      ...baseState,
+      hasKeyCollected: [],
+      isDoorUnlocked: [],
+    };
+  }, [getBaseInitialGameState]);
+
   const [gameState, setGameState] = useState<GameState>(() => getInitialGameState(currentLevelData));
 
-  // CORRETTO: La dipendenza 'getInitialGameState' è ora superflua, perché la funzione è importata.
-  // Resettiamo il livello al cambio di indice.
   useEffect(() => {
     setGameState(getInitialGameState(currentLevelData));
-  }, [currentLevelIndex]);
+  }, [currentLevelIndex, currentLevelData, getInitialGameState]);
 
   const handleDirectionChange = useCallback((direction: Direction | null) => {
     setPressedDirection(direction);
@@ -58,25 +62,35 @@ const GameManager = () => {
 
       if (destinationCell === '#') return prev;
 
-      const isDoor = destinationCell === 'D';
-      if (isDoor && !prev.hasKey) {
-        toast({ title: "Porta chiusa", description: "Trova la chiave per aprirla!" });
-        return prev;
+      let newHasKeyCollected = [...prev.hasKeyCollected];
+      let newIsDoorUnlocked = [...prev.isDoorUnlocked];
+      let gameWon = prev.gameWon;
+
+      const keyAtPosition = currentLevelData.keys.find(key => key.position.x === newPosition.x && key.position.y === newPosition.y);
+      if (keyAtPosition && !prev.hasKeyCollected.includes(keyAtPosition.id) && !prev.isDoorUnlocked.includes(keyAtPosition.id)) {
+        newHasKeyCollected.push(keyAtPosition.id);
+      }
+
+      const doorAtPosition = currentLevelData.doors.find(door => door.position.x === newPosition.x && door.position.y === newPosition.y);
+      if (doorAtPosition) {
+        if (doorAtPosition.type === 'key' && newHasKeyCollected.includes(doorAtPosition.id)) {
+          newIsDoorUnlocked.push(doorAtPosition.id);
+          newHasKeyCollected = newHasKeyCollected.filter(keyId => keyId !== doorAtPosition.id);
+        } else if (doorAtPosition.type === 'lever' && prev.isLeverPressed === doorAtPosition.id) {
+          newIsDoorUnlocked.push(doorAtPosition.id);
+        } else if (!newIsDoorUnlocked.includes(doorAtPosition.id)) {
+          return prev;
+        }
       }
 
       const isEnemyCollision = prev.enemies.some(enemy => enemy.position.x === newPosition.x && enemy.position.y === newPosition.y && enemy.isAlive);
       if (isEnemyCollision) {
-        toast({ title: "☠️ Preso!", description: "Sei stato catturato.", variant: "destructive" });
         return { ...prev, isPlayerDead: true };
       }
 
-      let newHasKey = prev.hasKey;
-      const isKey = destinationCell === 'K';
-      if (isKey && !prev.hasKey) {
-        newHasKey = true;
+      if (destinationCell === 'E') {
+        gameWon = true;
       }
-
-      const gameWon = destinationCell === 'E';
 
       return {
         ...prev,
@@ -85,15 +99,15 @@ const GameManager = () => {
         moveCount: prev.moveCount + 1,
         gameWon,
         isMoving: true,
-        hasKey: newHasKey,
         lastMoveTime: Date.now(),
+        hasKeyCollected: newHasKeyCollected,
+        isDoorUnlocked: newIsDoorUnlocked,
       };
     });
 
     setTimeout(() => setGameState(prev => ({ ...prev, isMoving: false })), 150);
-  }, [currentLevelData, gameState.gameWon, gameState.isMoving, gameState.isPlayerDead, gameState.lastMoveTime, toast]);
+  }, [currentLevelData, gameState.gameWon, gameState.isMoving, gameState.isPlayerDead, gameState.lastMoveTime]);
 
-  // EFFETTO: Movimento continuo del giocatore
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
     const movePlayerContinuously = () => {
@@ -107,7 +121,6 @@ const GameManager = () => {
     return () => clearInterval(intervalId);
   }, [pressedDirection, gameState.lastMoveTime, movePlayer]);
 
-  // EFFETTO: Gestione IA Nemici
   useEffect(() => {
     const gameLoop = setInterval(() => {
       if (gameState.gameWon || gameState.isPlayerDead) return;
@@ -172,16 +185,14 @@ const GameManager = () => {
         }));
       }
       if (playerIsCaught) {
-        toast({ title: "☠️ Preso!", description: "Un nemico ti ha raggiunto.", variant: "destructive" });
       }
     }, 200);
     return () => clearInterval(gameLoop);
-  }, [gameState, currentLevelData, toast, findPath]);
+  }, [gameState, currentLevelData, findPath]);
 
-  // EFFETTO: Gestione timer morte
   const handleLevelReset = useCallback(() => {
     setGameState(getInitialGameState(currentLevelData));
-  }, [currentLevelData]);
+  }, [currentLevelIndex, currentLevelData, getInitialGameState]);
 
   useEffect(() => {
     if (!gameState.isPlayerDead) return;
@@ -189,11 +200,14 @@ const GameManager = () => {
     return () => clearTimeout(timerId);
   }, [gameState.isPlayerDead, handleLevelReset]);
 
-  // EFFETTO: Gestione vittoria
   const handleNextLevel = useCallback(() => {
-    setCurrentLevelIndex(prevIndex => (prevIndex < levels.length - 1) ? prevIndex + 1 : 0);
-    toast({ title: "🎉 Gioco completato!", description: "Congratulazioni, hai finito tutti i livelli!", duration: 5000 });
-  }, [toast]);
+    setCurrentLevelIndex(prevIndex => {
+      const nextIndex = (prevIndex < levels.length - 1) ? prevIndex + 1 : 0;
+      if (nextIndex === 0 && prevIndex === levels.length - 1) {
+      }
+      return nextIndex;
+    });
+  }, []);
 
   useEffect(() => {
     let timerId: NodeJS.Timeout;
@@ -203,16 +217,50 @@ const GameManager = () => {
     return () => clearTimeout(timerId);
   }, [gameState.gameWon, handleNextLevel]);
 
+return (
+        <div className="relative">
+            <div className="absolute top-8 right-8 flex gap-2 z-30">
+                <Button onClick={handleLevelReset} className="w-12 h-12 p-0 bg-transparent hover:bg-green-700/50 border-none shadow-none">
+                    <img
+                        src={iconsSprite}
+                        alt="Restart Icon"
+                        className="w-full h-full"
+                    />
+                </Button>
 
-  return (
-    <GameBoard
-      key={currentLevelData.id}
-      level={currentLevelData}
-      gameState={gameState}
-      onDirectionChange={handleDirectionChange}
-      assets={GameAssets}
-    />
-  );
+                <Button className="w-12 h-12 p-0 bg-transparent hover:bg-green-700/50 border-none shadow-none">
+                    <img
+                        src={iconsSprite}
+                        alt="Main Menu Icon"
+                        className="w-full h-full"
+                    />
+                </Button>
+
+                <Button className="w-12 h-12 p-0 bg-transparent hover:bg-green-700/50 border-none shadow-none">
+                    <img
+                        src={iconsSprite}
+                        alt="Music Icon"
+                        className="w-full h-full"
+                    />
+                </Button>
+
+                <Button disabled className="w-12 h-12 p-0 bg-transparent hover:bg-green-700/50/50 border-none shadow-none">
+                    <img
+                        src={iconsSprite}
+                        alt="Sound Icon"
+                        className="w-full h-full"
+                    />
+                </Button>
+            </div>
+            <GameBoard
+                key={currentLevelData.id}
+                level={currentLevelData}
+                gameState={gameState}
+                onDirectionChange={handleDirectionChange}
+                assets={GameAssets}
+            />
+        </div>
+    );
 };
 
 export default GameManager;

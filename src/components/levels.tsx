@@ -9,8 +9,9 @@ export const levels: Level[] = [
   {
     id: 1,
     name: "La Ciuco Foresta",
-    keyPosition: { x: 2, y: 5 },
-    doorPosition: { x: 7, y: 2 },
+    keys: [{ id: 1, position: { x: 2, y: 5 } }], // Corretto: la chiave è un oggetto in un array
+    doors: [{ id: 1, position: { x: 7, y: 2 }, type: 'key' }], // Corretto: la porta è un oggetto in un array
+    levers: [], // Aggiunto: array per le leve
     enemies: [],
     grid: [
           "----#   #-",
@@ -28,6 +29,9 @@ export const levels: Level[] = [
   {
     id: 2,
     name: "Il Bruco",
+    keys: [], // Aggiunto: array vuoto
+    doors: [], // Aggiunto: array vuoto
+    levers: [], // Aggiunto: array vuoto
     enemies: [
         { id: 201, startPosition: { x: 7, y: 4 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}
     ],
@@ -47,6 +51,9 @@ export const levels: Level[] = [
   {
     id: 3,
     name: "MapTest",
+    keys: [], // Aggiunto: array vuoto
+    doors: [], // Aggiunto: array vuoto
+    levers: [], // Aggiunto: array vuoto
     enemies: [],
     grid: [
       "#P#       ",
@@ -58,5 +65,4 @@ export const levels: Level[] = [
       "     #    ",
     ],
   },
-  // ... puoi aggiungere qui fino al livello 100
 ];

@@ -16,7 +16,7 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
   useEffect(() => {
     const timer1 = setTimeout(() => {
       setAnimationState('animating');
-    }, 1500);
+    }, 2000);
 
     const timer2 = setTimeout(() => {
       setAnimationState('loaded');

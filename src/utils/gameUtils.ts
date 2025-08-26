@@ -1,6 +1,4 @@
-// src/utils/gameUtils.ts
-
-import { Level, GameState, Position, Direction } from '../game';
+import { Level, GameState, Position, Direction, EnemyState, Key, Door, Lever } from '../game';
 import { GRID_WIDTH, GRID_HEIGHT } from "@/config/Constants";
 
 /**
@@ -13,18 +11,23 @@ export const getInitialGameState = (level: Level): GameState => {
   let endPos: Position | undefined;
   let keyPos: Position | undefined;
   let doorPos: Position | undefined;
+  let enemies: EnemyState[] = [];
+  let enemyIdCounter = 0;
+
+  // Assicurati che gli array nel livello siano sempre inizializzati
+  const keys: Key[] = level.keys || [];
+  const doors: Door[] = level.doors || [];
+  const levers: Lever[] = level.levers || [];
 
   level.grid.forEach((row, y) => {
     row.split('').forEach((char, x) => {
       if (char === 'P') startPos = { x, y };
       if (char === 'E') endPos = { x, y };
-      if (char === 'K') keyPos = { x, y };
-      if (char === 'D') doorPos = { x, y };
+      // Le chiavi, porte e leve sono ora definite negli array, non più nel grid
     });
   });
 
-  // Nota: I dati nel livello originale dovrebbero già contenere queste posizioni
-  // ma questo garantisce la compatibilità.
+  // Questo garantisce la compatibilità
   level.startPosition = startPos;
   level.endPosition = endPos;
   level.keyPosition = keyPos;
@@ -37,10 +40,9 @@ export const getInitialGameState = (level: Level): GameState => {
     gameWon: false,
     moveCount: 0,
     isMoving: false,
-    hasKey: false,
     isPlayerDead: false,
     enemies: level.enemies?.map(e => ({
-      id: e.id,
+      id: enemyIdCounter++,
       position: e.startPosition,
       type: e.type,
       behavior: e.behavior,
@@ -50,6 +52,11 @@ export const getInitialGameState = (level: Level): GameState => {
       direction: "left",
       isAlive: true,
     })) || [],
+    hasKeyCollected: [],
+    isDoorUnlocked: [],
+    keys: keys,
+    doors: doors,
+    levers: levers,
   };
 };
 
@@ -84,7 +91,7 @@ export const findPath = (start: Position, end: Position, grid: string[]): Positi
       if (
         nextPos.x >= 0 && nextPos.x < GRID_WIDTH &&
         nextPos.y >= 0 && nextPos.y < GRID_HEIGHT &&
-        grid[nextPos.y][nextPos.x] !== '#' &&
+        grid[nextPos.y] && grid[nextPos.y][nextPos.x] !== '#' &&
         !visited.has(posKey)
       ) {
         visited.add(posKey);
