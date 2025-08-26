@@ -14,8 +14,8 @@ const GameCharacters = ({ gameState, assets }: GameCharactersProps) => {
     <>
 {/* GIOCATORE */}
 <div
-  className="absolute pointer-events-none z-20" // Transizioni CSS rimosse, corretto
-  style={{
+    className="absolute pointer-events-none z-20 transition-opacity duration-1000 ease-in-out"
+    style={{
     width: CELL_SIZE,
     height: CELL_SIZE,
 
@@ -45,31 +45,34 @@ const GameCharacters = ({ gameState, assets }: GameCharactersProps) => {
 </div>
 
       {/* NEMICI */}
-      {gameState.enemies.map((enemy) => {
-        if (!enemy.isAlive) {
-          return null;
-        }
-        return (
-          <div
-            key={enemy.id}
-            className="absolute pointer-events-none transition-all duration-150 ease-out z-10"
-            style={{
-              width: CELL_SIZE,
-              height: CELL_SIZE,
-              left: enemy.position.x * (CELL_SIZE + GAP_SIZE),
-              top: enemy.position.y * (CELL_SIZE + GAP_SIZE) - 20,
-            }}
-          >
-            <div className="w-full h-full flex items-center justify-center">
-              <img
-                src={assets.enemies[enemy.type][enemy.direction]}
-                alt={`Nemico ${enemy.type}`}
-                className="w-10 h-10 object-contain drop-shadow-md"
-              />
-            </div>
-          </div>
-        );
-      })}
+            {gameState.enemies.map((enemy) => {
+              // Rimuoviamo il return null immediato per permettere l'animazione di fade-out
+              // if (!enemy.isAlive) return null;
+
+              return (
+                <div
+                  key={enemy.id}
+                  // 👇 Aggiungiamo le classi per la transizione dell'opacità
+                  className="absolute pointer-events-none transition-all duration-500 ease-out z-10"
+                  style={{
+                    width: CELL_SIZE,
+                    height: CELL_SIZE,
+                    left: enemy.position.x * (CELL_SIZE + GAP_SIZE),
+                    top: enemy.position.y * (CELL_SIZE + GAP_SIZE) - 20,
+                    // 👇 Impostiamo l'opacità in base allo stato isAlive
+                    opacity: enemy.isAlive ? 1 : 0,
+                  }}
+                >
+                  <div className="w-full h-full flex items-center justify-center">
+                    <img
+                      src={assets.enemies[enemy.type][enemy.direction]}
+                      alt={`Nemico ${enemy.type}`}
+                      className="w-10 h-10 object-contain drop-shadow-md"
+                    />
+                  </div>
+                </div>
+              );
+            })}
     </>
   );
 };

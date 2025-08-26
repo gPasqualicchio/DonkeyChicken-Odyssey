@@ -11,20 +11,28 @@ import {
     PROJECTILE_SPEED,
     MOVE_DURATION,
     MOVE_COOLDOWN,
-    ENEMY_MOVE_INTERVAL
+    ENEMY_MOVE_INTERVAL,
+    ENEMY_HITBOX_RADIUS // Assicurati che sia importato da Constants.ts
 } from "@/config/Constants";
 
+// Funzione helper per caricare l'ultimo livello salvato
+const loadLastLevelIndex = (): number => {
+  try {
+    const savedIndex = localStorage.getItem('lastLevelIndex');
+    return savedIndex ? parseInt(savedIndex, 10) : 0;
+  } catch (error) {
+    console.error("Failed to load level index from localStorage", error);
+    return 0;
+  }
+};
+
 export const useGameEngine = () => {
-  // --- STATO E RIFERIMENTI ---
-  const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
+  const [currentLevelIndex, setCurrentLevelIndex] = useState(loadLastLevelIndex);
   const [pressedDirection, setPressedDirection] = useState<Direction | null>(null);
   const nextProjectileId = useRef(0);
 
   const currentLevelData = levels[currentLevelIndex];
 
-  // --- FUNZIONI DI GIOCO PRINCIPALI ---
-
-  // 👇 SPOSTATA QUI: La funzione viene definita PRIMA di essere usata.
   const getInitialGameState = useCallback((level: Level): GameState => {
     const baseState = getBaseInitialGameState(level);
     const initialPixelPosition = {
@@ -33,26 +41,18 @@ export const useGameEngine = () => {
     };
     return {
       ...baseState,
-      hasKeyCollected: [],
-      isDoorUnlocked: [],
-      projectiles: [],
+      hasKeyCollected: [], isDoorUnlocked: [], projectiles: [],
       spittingTotems: level.spittingTotems?.map(t => ({...t, isAlive: true, lastShotTime: 0})) || [],
-      playerPixelPosition: initialPixelPosition,
-      startPosition: baseState.playerPosition,
-      moveStartTime: 0,
-      lastMoveTime: 0,
+      playerPixelPosition: initialPixelPosition, startPosition: baseState.playerPosition,
+      moveStartTime: 0, lastMoveTime: 0,
     };
   }, []);
 
-  // Lo stato viene inizializzato DOPO che la funzione `getInitialGameState` è stata definita.
   const [gameState, setGameState] = useState<GameState>(() => getInitialGameState(currentLevelData));
-
 
   const movePlayer = useCallback((direction: Direction) => {
     setGameState(prev => {
-      if (Date.now() - prev.lastMoveTime < MOVE_COOLDOWN || prev.isMoving || prev.isPlayerDead || prev.gameWon) {
-        return prev;
-      }
+      if (Date.now() - prev.lastMoveTime < MOVE_COOLDOWN || prev.isMoving || prev.isPlayerDead || prev.gameWon) return prev;
       const newPosition = { ...prev.playerPosition };
       switch (direction) {
         case "up": newPosition.y--; break;
@@ -70,23 +70,13 @@ export const useGameEngine = () => {
     });
   }, [currentLevelData]);
 
-  const handleDirectionChange = useCallback((direction: Direction | null) => {
-    setPressedDirection(direction);
-  }, []);
+  const handleDirectionChange = useCallback((direction: Direction | null) => { setPressedDirection(direction); }, []);
+  const handleLevelReset = useCallback(() => { setGameState(getInitialGameState(currentLevelData)); }, [currentLevelData, getInitialGameState]);
+  const handleNextLevel = useCallback(() => { setCurrentLevelIndex(prev => (prev + 1) % levels.length); }, []);
+  const startNewGame = useCallback(() => { localStorage.setItem('lastLevelIndex', '0'); setCurrentLevelIndex(0); }, []);
 
-  const handleLevelReset = useCallback(() => {
-    setGameState(getInitialGameState(currentLevelData));
-  }, [currentLevelData, getInitialGameState]);
-
-  const handleNextLevel = useCallback(() => {
-    setCurrentLevelIndex(prev => (prev + 1) % levels.length);
-  }, []);
-
-  // --- LOOPS DI GIOCO (EFFECTS) ---
-
-  useEffect(() => {
-    setGameState(getInitialGameState(currentLevelData));
-  }, [currentLevelIndex, currentLevelData, getInitialGameState]);
+  useEffect(() => { setGameState(getInitialGameState(currentLevelData)); }, [currentLevelIndex, currentLevelData, getInitialGameState]);
+  useEffect(() => { localStorage.setItem('lastLevelIndex', currentLevelIndex.toString()); }, [currentLevelIndex]);
 
   useEffect(() => {
     const gameLoop = setInterval(() => {
@@ -106,18 +96,25 @@ export const useGameEngine = () => {
             newState.lastMoveTime = now;
             const finalPos = newState.playerPosition;
             const keyAtPos = currentLevelData.keys.find(k => k.position.x === finalPos.x && k.position.y === finalPos.y);
-            if (keyAtPos && !newState.hasKeyCollected.includes(keyAtPos.id)) {
-              newState.hasKeyCollected = [...newState.hasKeyCollected, keyAtPos.id];
-            }
+            if (keyAtPos && !newState.hasKeyCollected.includes(keyAtPos.id)) { newState.hasKeyCollected = [...newState.hasKeyCollected, keyAtPos.id]; }
             const doorAtPos = currentLevelData.doors.find(d => d.position.x === finalPos.x && d.position.y === finalPos.y);
-            if (doorAtPos && newState.hasKeyCollected.includes(doorAtPos.id)) {
-              newState.isDoorUnlocked = [...newState.isDoorUnlocked, doorAtPos.id];
-            }
+            if (doorAtPos && newState.hasKeyCollected.includes(doorAtPos.id)) { newState.isDoorUnlocked = [...newState.isDoorUnlocked, doorAtPos.id]; }
             if (currentLevelData.grid[finalPos.y][finalPos.x] === 'E') { newState.gameWon = true; }
           }
         }
-        const projectileUpdates = updateProjectiles(newState, currentLevelData, nextProjectileId);
-        newState = { ...newState, ...projectileUpdates };
+
+        // 👇 MODIFICA 1: Ora riceviamo anche gli ID dei nemici colpiti
+        const { projectiles, spittingTotems, hitEnemyIds } = updateProjectiles(newState, currentLevelData, nextProjectileId);
+        newState.projectiles = projectiles;
+        newState.spittingTotems = spittingTotems;
+
+        // 👇 MODIFICA 2: Se ci sono nemici colpiti, li marchiamo come non più vivi
+        if (hitEnemyIds && hitEnemyIds.size > 0) {
+          newState.enemies = newState.enemies.map(enemy =>
+            hitEnemyIds.has(enemy.id) ? { ...enemy, isAlive: false } : enemy
+          );
+        }
+
         const hittingProjectile = newState.projectiles.find(proj => {
           const dx = newState.playerPixelPosition.x - proj.position.x;
           const dy = newState.playerPixelPosition.y - proj.position.y;
@@ -141,14 +138,11 @@ export const useGameEngine = () => {
       setGameState(prev => {
         if (prev.gameWon || prev.isPlayerDead) return prev;
         const playerGridPos = prev.isMoving ? prev.playerPosition : prev.startPosition;
-        let playerIsCaught = false;
         const newEnemies = prev.enemies.map(enemy => {
-          if (!enemy.isAlive || !enemy.moveInterval || Date.now() - enemy.lastMoveTime < enemy.moveInterval) {
-            return enemy;
-          }
+          if (!enemy.isAlive || !enemy.moveInterval || Date.now() - enemy.lastMoveTime < enemy.moveInterval) return enemy;
           let desiredNextPosition = { ...enemy.position };
           const isPlayerInVision = Math.abs(playerGridPos.x - enemy.position.x) + Math.abs(playerGridPos.y - enemy.position.y) <= enemy.visionRange;
-          if ((enemy.behavior === 'active' || enemy.behavior === 'smart_active') && isPlayerInVision) {
+          if (isPlayerInVision) {
             if (enemy.behavior === 'smart_active') {
               const path = findPath(enemy.position, playerGridPos, currentLevelData.grid);
               if (path.length > 1) desiredNextPosition = path[1];
@@ -159,22 +153,15 @@ export const useGameEngine = () => {
                 desiredNextPosition.y += Math.sign(playerGridPos.y - enemy.position.y);
               }
             }
-          } else {
-            return enemy;
-          }
-          if (desiredNextPosition.x === playerGridPos.x && desiredNextPosition.y === playerGridPos.y) {
-            playerIsCaught = true;
-            return enemy;
-          }
-          const isBlockedByOtherEnemy = prev.enemies.some(otherEnemy => otherEnemy.id !== enemy.id && otherEnemy.isAlive && otherEnemy.position.x === desiredNextPosition.x && otherEnemy.position.y === desiredNextPosition.y);
-          if(isBlockedByOtherEnemy) {
-              return enemy;
-          }
+          } else { return enemy; }
+          if (desiredNextPosition.x === playerGridPos.x && desiredNextPosition.y === playerGridPos.y) return enemy;
+          const isBlocked = prev.enemies.some(e => e.id !== enemy.id && e.isAlive && e.position.x === desiredNextPosition.x && e.position.y === desiredNextPosition.y);
+          if(isBlocked) return enemy;
           const desiredDirection = (desiredNextPosition.x > enemy.position.x ? 'right' : desiredNextPosition.x < enemy.position.x ? 'left' : desiredNextPosition.y > enemy.position.y ? 'down' : 'up');
           return { ...enemy, position: desiredNextPosition, direction: desiredDirection, lastMoveTime: Date.now() };
         });
-        if (newEnemies.some((e, i) => e.position.x !== prev.enemies[i].position.x || e.position.y !== prev.enemies[i].position.y) || playerIsCaught) {
-          return { ...prev, enemies: newEnemies, isPlayerDead: prev.isPlayerDead || playerIsCaught };
+        if (newEnemies.some((e, i) => e.position.x !== prev.enemies[i].position.x || e.position.y !== prev.enemies[i].position.y)) {
+          return { ...prev, enemies: newEnemies };
         }
         return prev;
       });
@@ -192,16 +179,16 @@ export const useGameEngine = () => {
   useEffect(() => { if (gameState.gameWon) { const t = setTimeout(handleNextLevel, 2000); return () => clearTimeout(t); } }, [gameState.gameWon, handleNextLevel]);
 
   return {
-    gameState,
-    currentLevelData,
-    handleDirectionChange,
-    handleLevelReset,
+    gameState, currentLevelData, handleDirectionChange, handleLevelReset, startNewGame,
   };
 };
 
-function updateProjectiles(prevState: GameState, levelData: any, nextProjectileId: React.MutableRefObject<number>): Partial<GameState> {
+// 👇 MODIFICA 3: La funzione helper `updateProjectiles` è ora aggiornata
+function updateProjectiles(prevState: GameState, levelData: any, nextProjectileId: React.MutableRefObject<number>): Partial<GameState> & { hitEnemyIds: Set<string> } {
     const now = Date.now();
+    const hitEnemyIds = new Set<string>();
     let projectiles = [...prevState.projectiles];
+
     const spittingTotems = prevState.spittingTotems.map(totem => {
       if (totem.isAlive && now - totem.lastShotTime > FIRE_INTERVAL) {
         projectiles.push({
@@ -213,6 +200,7 @@ function updateProjectiles(prevState: GameState, levelData: any, nextProjectileI
       }
       return totem;
     });
+
     projectiles = projectiles.map(proj => {
       let newPos = { ...proj.position };
       switch (proj.direction) {
@@ -221,14 +209,34 @@ function updateProjectiles(prevState: GameState, levelData: any, nextProjectileI
         case 'left': newPos.x -= PROJECTILE_SPEED; break;
         case 'right': newPos.x += PROJECTILE_SPEED; break;
       }
+
+      const enemyHit = prevState.enemies.find(enemy => {
+        if (!enemy.isAlive) return false;
+        const enemyPixelPos = {
+          x: enemy.position.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2),
+          y: enemy.position.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2),
+        };
+        const dx = newPos.x - enemyPixelPos.x;
+        const dy = newPos.y - enemyPixelPos.y;
+        const distanceSquared = (dx * dx) + (dy * dy);
+        const sumOfRadii = PROJECTILE_HITBOX_RADIUS + ENEMY_HITBOX_RADIUS;
+        return distanceSquared < (sumOfRadii * sumOfRadii);
+      });
+
+      if (enemyHit) {
+        hitEnemyIds.add(enemyHit.id);
+        return null;
+      }
+
       const gridX = Math.floor(newPos.x / (CELL_SIZE + GAP_SIZE));
       const gridY = Math.floor(newPos.y / (CELL_SIZE + GAP_SIZE));
       if (gridX < 0 || gridX >= levelData.grid[0].length || gridY < 0 || gridY >= levelData.grid.length ||
-          levelData.grid[gridY]?.[gridX] === '#' ||
-          prevState.enemies.some(e => e.isAlive && e.position.x === gridX && e.position.y === gridY)) {
+          levelData.grid[gridY]?.[gridX] === '#') {
         return null;
       }
+
       return { ...proj, position: newPos };
     }).filter((p): p is NonNullable<typeof p> => p !== null);
-    return { projectiles, spittingTotems };
+
+    return { projectiles, spittingTotems, hitEnemyIds };
 }

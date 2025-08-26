@@ -197,7 +197,7 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
   const getCellStyles = (cellType: string, x: number, y: number) => {
     const baseStyles = "flex items-center justify-center text-2xl font-bold transition-all duration-300";
     switch (cellType) {
-      case 'obstacle': return `${baseStyles} bg-green-900/30`;
+      case 'obstacle': return `${baseStyles} bg-transparent`;
       case 'start': return `${baseStyles} bg-transparent`;
       case 'end': return `${baseStyles} bg-transparent`;
       case 'key': return `${baseStyles} bg-transparent`;

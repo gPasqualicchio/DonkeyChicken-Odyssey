@@ -1,17 +1,27 @@
+// src/components/GameManager.tsx
+
 import GameBoard from "./game/GameBoard";
+import { GameState, Level, Direction } from '../game'; // Percorsi aggiornati
 import { GameAssets } from "@/config/Assets";
 import { Button } from "@/components/ui/button";
 import iconsSprite from '@/assets/icons/Icons_InGame.png';
-import { useGameEngine } from "@/hooks/useGameEngine";
 
-const GameManager = () => {
-  // Il componente riceve tutto ciò di cui ha bisogno dall'engine.
-  const {
-    gameState,
-    currentLevelData,
-    handleLevelReset,
-    handleDirectionChange,
-  } = useGameEngine();
+// 1. Definiamo le props che il componente riceverà
+interface GameManagerProps {
+  gameState: GameState;
+  currentLevelData: Level;
+  handleDirectionChange: (direction: Direction | null) => void;
+  handleLevelReset: () => void;
+}
+
+const GameManager = ({
+  gameState,
+  currentLevelData,
+  handleDirectionChange,
+  handleLevelReset
+}: GameManagerProps) => {
+
+  // 2. L'hook useGameEngine NON viene più chiamato qui!
 
   return (
     <div className="relative">

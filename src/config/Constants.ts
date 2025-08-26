@@ -7,12 +7,13 @@ export const SWIPE_THRESHOLD = 30;
 // Esempio di raggi per le hitbox (in pixel)
 // Prova a modificare questi valori per trovare il "feel" giusto
 export const PLAYER_HITBOX_RADIUS = 18; // es. se la cella è 48px, un raggio di 18 è permissivo
+export const ENEMY_HITBOX_RADIUS = 18;
 export const PROJECTILE_HITBOX_RADIUS = 10; // I proiettili di solito hanno una hitbox più piccola del loro sprite
 
 export const IS_DEBUG_MODE = true;
 
-export const FIRE_INTERVAL = 2000;
-export const PROJECTILE_SPEED = 2;
+export const FIRE_INTERVAL = 1200;
+export const PROJECTILE_SPEED = 3;
 export const MOVE_DURATION = 150;
-export const MOVE_COOLDOWN = 500;
+export const MOVE_COOLDOWN = 200;
 export const ENEMY_MOVE_INTERVAL = 200;

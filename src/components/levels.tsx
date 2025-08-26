@@ -71,8 +71,8 @@ export const levels: Level[] = [
   {
     id: 4,
     name: "Oh god, another caterpillar",
-    keys: [{ id: 1, position: { x: 1, y: 2 } }], // End door key
-    doors: [{ id: 1, position: { x: 4, y: 5 }, type: 'key' }], // Corretto: la porta è un oggetto in un array
+    keys: [{ id: 1, position: { x: 1, y: 2 } }],
+    doors: [{ id: 1, position: { x: 4, y: 5 }, type: 'key' }],
     levers: [],
     enemies: [ { id: 201, startPosition: { x: 1, y: 1 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
     grid: [
@@ -92,33 +92,44 @@ export const levels: Level[] = [
     id: 6,
     name: "Such a cool totem",
       spittingTotems: [
-        {
-          id: 1,
-          position: { x: 3, y: 0 },
-          direction: 'down',
-          isAlive: true,
-          lastShotTime: 0,
-        },
-        {
-          id: 2,
-          position: { x: 6, y: 0 },
-          direction: 'down',
-          isAlive: true,
-          lastShotTime: 0,
-        }
+        { id: 1, position: { x: 3, y: 0 }, direction: 'down', isAlive: true, lastShotTime: 600},
+        { id: 2, position: { x: 6, y: 0 }, direction: 'down', isAlive: true, lastShotTime: 0}
       ],
       keys: [],
       doors: [],
       levers: [],
       enemies: [],
     grid: [
-      "### ## ##-",
+      "### ## ###",
       "P        #",
       "### ## # #",
       "--# ## # #",
       "### ## # #",
       "E        #",
       "##########",
+    ],
+  },
+      /*
+           7 - Ah ah!
+       */
+  {
+    id: 6,
+    name: "Ah ah!",
+      spittingTotems: [
+        { id: 1, position: { x: 7, y: 6 }, direction: 'up', isAlive: true, lastShotTime: 600}
+      ],
+      keys: [{ id: 1, position: { x: 1, y: 3 } }],
+      doors: [{ id: 1, position: { x: 3, y: 2 }, type: 'key' }],
+      levers: [],
+      enemies: [ { id: 601, startPosition: { x: 1, y: 2 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
+    grid: [
+      "##########",
+      "#         ",
+      "# # ### # ",
+      "# #E###   ",
+      "####### ##",
+      "#######  P",
+      "####### ##",
     ],
   },
 ];

@@ -1,27 +1,25 @@
-// src/components/game/MainMenu.tsx
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 
 import mainMenuBackground from '@/assets/SfondoCiuco1.png';
 import titleImage from '@/assets/MainPageTitle3.png';
 
+// 1. Aggiorniamo le props per includere la funzione per continuare
 interface MainMenuProps {
-  onStartNewGame: () => void; // L'interfaccia è corretta
+  onStartNewGame: () => void;
+  onContinueGame: () => void;
 }
 
-const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
+const MainMenu = ({ onStartNewGame, onContinueGame }: MainMenuProps) => {
   const [animationState, setAnimationState] = useState('loading');
 
+  // 2. Controlliamo se esiste un salvataggio per abilitare il pulsante
+  const savedLevelIndex = localStorage.getItem('lastLevelIndex');
+  const canContinue = savedLevelIndex ? parseInt(savedLevelIndex, 10) > 0 : false;
+
   useEffect(() => {
-    const timer1 = setTimeout(() => {
-      setAnimationState('animating');
-    }, 2000);
-
-    const timer2 = setTimeout(() => {
-      setAnimationState('loaded');
-    }, 3000);
-
+    const timer1 = setTimeout(() => setAnimationState('animating'), 2000);
+    const timer2 = setTimeout(() => setAnimationState('loaded'), 3000);
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
@@ -53,15 +51,21 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
           `}
         >
           <Button
-            // CORRETTO: Chiamiamo la prop onStartNewGame
             onClick={onStartNewGame}
             className="text-lg py-6 bg-green-600/80 hover:bg-green-500/80 shadow-lg border-green-400/50"
           >
             Nuova Partita
           </Button>
-          <Button disabled className="text-lg py-6">
+
+          {/* 3. Il pulsante ora è funzionale */}
+          <Button
+            onClick={onContinueGame}
+            disabled={!canContinue}
+            className="text-lg py-6"
+          >
             Continua Partita
           </Button>
+
           <Button disabled className="text-lg py-6">
             Opzioni
           </Button>
@@ -70,7 +74,7 @@ const MainMenu = ({ onStartNewGame }: MainMenuProps) => {
       <div
         className={`
           absolute inset-0 w-full h-full bg-black z-10
-          transition-opacity duration-10 maximising
+          transition-opacity duration-1000
           ${animationState === 'loaded' ? 'opacity-0 pointer-events-none' : 'opacity-100'}
         `}
       />
