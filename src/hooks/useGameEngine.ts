@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { levels } from '@/components/levels';
-import { Level, GameState, Position, Direction } from '@/game';
-import { findPath, getInitialGameState as getBaseInitialGameState } from "@/utils/gameUtils";
+import { Level, GameState, Position, Direction, EnemyState } from '@/game';
+import { findPath, getInitialGameState as getBaseInitialGameState, hasLineOfSight } from "@/utils/gameUtils";
 import {
     CELL_SIZE,
     GAP_SIZE,
@@ -12,14 +12,20 @@ import {
     MOVE_DURATION,
     MOVE_COOLDOWN,
     ENEMY_MOVE_INTERVAL,
-    ENEMY_HITBOX_RADIUS // Assicurati che sia importato da Constants.ts
+    ENEMY_HITBOX_RADIUS,
+    CHARACTER_Y_OFFSET
 } from "@/config/Constants";
 
-// Funzione helper per caricare l'ultimo livello salvato
 const loadLastLevelIndex = (): number => {
   try {
     const savedIndex = localStorage.getItem('lastLevelIndex');
-    return savedIndex ? parseInt(savedIndex, 10) : 0;
+    if (savedIndex) {
+      const parsedIndex = parseInt(savedIndex, 10);
+      if (!isNaN(parsedIndex) && parsedIndex >= 0 && parsedIndex < levels.length) {
+        return parsedIndex;
+      }
+    }
+    return 0;
   } catch (error) {
     console.error("Failed to load level index from localStorage", error);
     return 0;
@@ -35,16 +41,33 @@ export const useGameEngine = () => {
 
   const getInitialGameState = useCallback((level: Level): GameState => {
     const baseState = getBaseInitialGameState(level);
-    const initialPixelPosition = {
+    const initialPlayerPixelPosition = {
         x: baseState.playerPosition.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2),
-        y: baseState.playerPosition.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2) - 16,
+        y: baseState.playerPosition.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2) + CHARACTER_Y_OFFSET,
     };
+
+    const initialEnemies: EnemyState[] = baseState.enemies.map(enemy => ({
+      ...enemy,
+      pixelPosition: {
+        x: enemy.position.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2),
+        y: enemy.position.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2) + CHARACTER_Y_OFFSET,
+      },
+      startPosition: enemy.position,
+      isMoving: false,
+      moveStartTime: 0,
+    }));
+
     return {
       ...baseState,
-      hasKeyCollected: [], isDoorUnlocked: [], projectiles: [],
+      enemies: initialEnemies,
+      hasKeyCollected: [],
+      isDoorUnlocked: [],
+      projectiles: [],
       spittingTotems: level.spittingTotems?.map(t => ({...t, isAlive: true, lastShotTime: 0})) || [],
-      playerPixelPosition: initialPixelPosition, startPosition: baseState.playerPosition,
-      moveStartTime: 0, lastMoveTime: 0,
+      playerPixelPosition: initialPlayerPixelPosition,
+      startPosition: baseState.playerPosition,
+      moveStartTime: 0,
+      lastMoveTime: 0,
     };
   }, []);
 
@@ -87,8 +110,8 @@ export const useGameEngine = () => {
         if (newState.isMoving) {
           const elapsed = now - newState.moveStartTime;
           const progress = Math.min(elapsed / MOVE_DURATION, 1);
-          const startPixel = { x: newState.startPosition.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2), y: newState.startPosition.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2) - 16 };
-          const endPixel = { x: newState.playerPosition.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2), y: newState.playerPosition.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2) - 16 };
+          const startPixel = { x: newState.startPosition.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2), y: newState.startPosition.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2) + CHARACTER_Y_OFFSET };
+          const endPixel = { x: newState.playerPosition.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2), y: newState.playerPosition.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2) + CHARACTER_Y_OFFSET };
           newState.playerPixelPosition = { x: startPixel.x + (endPixel.x - startPixel.x) * progress, y: startPixel.y + (endPixel.y - startPixel.y) * progress };
           if (progress >= 1) {
             newState.isMoving = false;
@@ -102,19 +125,24 @@ export const useGameEngine = () => {
             if (currentLevelData.grid[finalPos.y][finalPos.x] === 'E') { newState.gameWon = true; }
           }
         }
-
-        // 👇 MODIFICA 1: Ora riceviamo anche gli ID dei nemici colpiti
+        newState.enemies = newState.enemies.map(enemy => {
+            if (!enemy.isMoving) return enemy;
+            const elapsed = now - enemy.moveStartTime;
+            const progress = Math.min(elapsed / ENEMY_MOVE_INTERVAL, 1);
+            const startPixel = { x: enemy.startPosition.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2), y: enemy.startPosition.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2) + CHARACTER_Y_OFFSET };
+            const endPixel = { x: enemy.position.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2), y: enemy.position.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2) + CHARACTER_Y_OFFSET };
+            const newPixelPosition = { x: startPixel.x + (endPixel.x - startPixel.x) * progress, y: startPixel.y + (endPixel.y - startPixel.y) * progress };
+            if (progress >= 1) {
+                return { ...enemy, isMoving: false, startPosition: enemy.position, pixelPosition: endPixel };
+            }
+            return { ...enemy, pixelPosition: newPixelPosition };
+        });
         const { projectiles, spittingTotems, hitEnemyIds } = updateProjectiles(newState, currentLevelData, nextProjectileId);
         newState.projectiles = projectiles;
         newState.spittingTotems = spittingTotems;
-
-        // 👇 MODIFICA 2: Se ci sono nemici colpiti, li marchiamo come non più vivi
         if (hitEnemyIds && hitEnemyIds.size > 0) {
-          newState.enemies = newState.enemies.map(enemy =>
-            hitEnemyIds.has(enemy.id) ? { ...enemy, isAlive: false } : enemy
-          );
+          newState.enemies = newState.enemies.map(enemy => hitEnemyIds.has(enemy.id) ? { ...enemy, isAlive: false } : enemy);
         }
-
         const hittingProjectile = newState.projectiles.find(proj => {
           const dx = newState.playerPixelPosition.x - proj.position.x;
           const dy = newState.playerPixelPosition.y - proj.position.y;
@@ -137,32 +165,59 @@ export const useGameEngine = () => {
     const aiLoop = setInterval(() => {
       setGameState(prev => {
         if (prev.gameWon || prev.isPlayerDead) return prev;
+
         const playerGridPos = prev.isMoving ? prev.playerPosition : prev.startPosition;
+        let playerIsCaught = false;
+
         const newEnemies = prev.enemies.map(enemy => {
-          if (!enemy.isAlive || !enemy.moveInterval || Date.now() - enemy.lastMoveTime < enemy.moveInterval) return enemy;
+          if (enemy.isMoving || !enemy.isAlive || !enemy.moveInterval || Date.now() - enemy.lastMoveTime < enemy.moveInterval) {
+            return enemy;
+          }
+
           let desiredNextPosition = { ...enemy.position };
-          const isPlayerInVision = Math.abs(playerGridPos.x - enemy.position.x) + Math.abs(playerGridPos.y - enemy.position.y) <= enemy.visionRange;
+
+          const path = findPath(enemy.position, playerGridPos, currentLevelData.grid);
+          const pathDistance = path.length - 1;
+          const isPlayerInVision = path.length > 0 && pathDistance <= enemy.visionRange;
+
           if (isPlayerInVision) {
             if (enemy.behavior === 'smart_active') {
-              const path = findPath(enemy.position, playerGridPos, currentLevelData.grid);
               if (path.length > 1) desiredNextPosition = path[1];
-            } else {
+            } else if (enemy.behavior === 'active') {
               if (Math.abs(playerGridPos.x - enemy.position.x) > Math.abs(playerGridPos.y - enemy.position.y)) {
                 desiredNextPosition.x += Math.sign(playerGridPos.x - enemy.position.x);
               } else {
                 desiredNextPosition.y += Math.sign(playerGridPos.y - enemy.position.y);
               }
             }
-          } else { return enemy; }
-          if (desiredNextPosition.x === playerGridPos.x && desiredNextPosition.y === playerGridPos.y) return enemy;
-          const isBlocked = prev.enemies.some(e => e.id !== enemy.id && e.isAlive && e.position.x === desiredNextPosition.x && e.position.y === desiredNextPosition.y);
-          if(isBlocked) return enemy;
+          } else {
+            return enemy;
+          }
+
+          if (desiredNextPosition.x === enemy.position.x && desiredNextPosition.y === enemy.position.y) return enemy;
+
+          // --- MODIFICA CHIAVE QUI ---
+          // Controlliamo se la destinazione è il giocatore
+          if (desiredNextPosition.x === playerGridPos.x && desiredNextPosition.y === playerGridPos.y) {
+            playerIsCaught = true;
+            // NON ritorniamo più `enemy` qui, permettiamo al nemico di "muoversi" e al flag di essere processato.
+          }
+
+          // Controlla se è bloccato da un altro nemico
+          const isBlockedByOtherEnemy = prev.enemies.some(e => e.id !== enemy.id && e.isAlive && e.position.x === desiredNextPosition.x && e.position.y === desiredNextPosition.y);
+          if (isBlockedByOtherEnemy) {
+            return enemy;
+          }
+
           const desiredDirection = (desiredNextPosition.x > enemy.position.x ? 'right' : desiredNextPosition.x < enemy.position.x ? 'left' : desiredNextPosition.y > enemy.position.y ? 'down' : 'up');
-          return { ...enemy, position: desiredNextPosition, direction: desiredDirection, lastMoveTime: Date.now() };
+          return { ...enemy, isMoving: true, startPosition: enemy.position, position: desiredNextPosition, moveStartTime: Date.now(), lastMoveTime: Date.now(), direction: desiredDirection };
         });
-        if (newEnemies.some((e, i) => e.position.x !== prev.enemies[i].position.x || e.position.y !== prev.enemies[i].position.y)) {
-          return { ...prev, enemies: newEnemies };
+
+        // Aggiorna lo stato se un nemico si è mosso O se il giocatore è stato catturato
+        if (newEnemies.some(e => e.isMoving) || playerIsCaught) {
+            return { ...prev, enemies: newEnemies, isPlayerDead: prev.isPlayerDead || playerIsCaught };
         }
+
         return prev;
       });
     }, ENEMY_MOVE_INTERVAL);
@@ -179,16 +234,18 @@ export const useGameEngine = () => {
   useEffect(() => { if (gameState.gameWon) { const t = setTimeout(handleNextLevel, 2000); return () => clearTimeout(t); } }, [gameState.gameWon, handleNextLevel]);
 
   return {
-    gameState, currentLevelData, handleDirectionChange, handleLevelReset, startNewGame,
+    gameState,
+    currentLevelData,
+    handleDirectionChange,
+    handleLevelReset,
+    startNewGame,
   };
 };
 
-// 👇 MODIFICA 3: La funzione helper `updateProjectiles` è ora aggiornata
 function updateProjectiles(prevState: GameState, levelData: any, nextProjectileId: React.MutableRefObject<number>): Partial<GameState> & { hitEnemyIds: Set<string> } {
     const now = Date.now();
     const hitEnemyIds = new Set<string>();
     let projectiles = [...prevState.projectiles];
-
     const spittingTotems = prevState.spittingTotems.map(totem => {
       if (totem.isAlive && now - totem.lastShotTime > FIRE_INTERVAL) {
         projectiles.push({
@@ -200,7 +257,6 @@ function updateProjectiles(prevState: GameState, levelData: any, nextProjectileI
       }
       return totem;
     });
-
     projectiles = projectiles.map(proj => {
       let newPos = { ...proj.position };
       switch (proj.direction) {
@@ -209,12 +265,11 @@ function updateProjectiles(prevState: GameState, levelData: any, nextProjectileI
         case 'left': newPos.x -= PROJECTILE_SPEED; break;
         case 'right': newPos.x += PROJECTILE_SPEED; break;
       }
-
       const enemyHit = prevState.enemies.find(enemy => {
         if (!enemy.isAlive) return false;
         const enemyPixelPos = {
-          x: enemy.position.x * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2),
-          y: enemy.position.y * (CELL_SIZE + GAP_SIZE) + (CELL_SIZE / 2),
+          x: enemy.pixelPosition.x,
+          y: enemy.pixelPosition.y,
         };
         const dx = newPos.x - enemyPixelPos.x;
         const dy = newPos.y - enemyPixelPos.y;
@@ -222,21 +277,17 @@ function updateProjectiles(prevState: GameState, levelData: any, nextProjectileI
         const sumOfRadii = PROJECTILE_HITBOX_RADIUS + ENEMY_HITBOX_RADIUS;
         return distanceSquared < (sumOfRadii * sumOfRadii);
       });
-
       if (enemyHit) {
         hitEnemyIds.add(enemyHit.id);
         return null;
       }
-
       const gridX = Math.floor(newPos.x / (CELL_SIZE + GAP_SIZE));
       const gridY = Math.floor(newPos.y / (CELL_SIZE + GAP_SIZE));
       if (gridX < 0 || gridX >= levelData.grid[0].length || gridY < 0 || gridY >= levelData.grid.length ||
           levelData.grid[gridY]?.[gridX] === '#') {
         return null;
       }
-
       return { ...proj, position: newPos };
     }).filter((p): p is NonNullable<typeof p> => p !== null);
-
     return { projectiles, spittingTotems, hitEnemyIds };
 }

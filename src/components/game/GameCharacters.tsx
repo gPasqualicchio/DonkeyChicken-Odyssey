@@ -2,8 +2,8 @@
 
 import { GameState, Direction } from "../../game";
 import { GameAssets } from "@/config/Assets";
-// 👇 Importiamo le costanti che ci servono
-import { CELL_SIZE, GAP_SIZE, IS_DEBUG_MODE, ENEMY_HITBOX_RADIUS } from "@/config/Constants";
+// Importa anche CHARACTER_Y_OFFSET per riferimento, anche se non la useremo direttamente qui
+import { CELL_SIZE, GAP_SIZE, IS_DEBUG_MODE, ENEMY_HITBOX_RADIUS, CHARACTER_Y_OFFSET } from "@/config/Constants";
 
 interface GameCharactersProps {
   gameState: GameState;
@@ -13,15 +13,20 @@ interface GameCharactersProps {
 const GameCharacters = ({ gameState, assets }: GameCharactersProps) => {
   return (
     <>
-      {/* GIOCATORE (invariato) */}
+      {/* GIOCATORE */}
       <div
         className="absolute pointer-events-none z-20 transition-opacity duration-1000 ease-in-out"
         style={{
           width: CELL_SIZE,
           height: CELL_SIZE,
           left: gameState.playerPixelPosition.x,
-          top: gameState.playerPixelPosition.y + 16,
-          transform: `translate(-50%, -83%) ${gameState.isMoving ? 'scale(1.1)' : 'scale(1)'}`,
+          top: gameState.playerPixelPosition.y,
+          // 👇 MODIFICA CHIAVE QUI: Regoliamo il translateY per allineare i "piedi"
+          // Se lo sprite è alto circa CELL_SIZE, e vogliamo i piedi al centro della hitbox
+          // allora dobbiamo traslare di meno. Un valore come -83% o -90% funziona bene
+          // per sprite che hanno una parte "vuota" in basso o che si estendono leggermente
+          // sotto il centro visivo.
+          transform: `translate(-50%, -50%) ${gameState.isMoving ? 'scale(1.1)' : 'scale(1)'}`, // Torniamo a -83% o prova -90%
           opacity: gameState.gameWon ? 0 : 1,
         }}
       >
@@ -38,21 +43,23 @@ const GameCharacters = ({ gameState, assets }: GameCharactersProps) => {
         </div>
       </div>
 
-      {/* NEMICI (con hitbox di debug) */}
+      {/* NEMICI */}
       {gameState.enemies.map((enemy) => {
         return (
           <div
             key={enemy.id}
-            className="absolute pointer-events-none transition-all duration-500 ease-out z-10"
+            className="absolute pointer-events-none z-10"
             style={{
               width: CELL_SIZE,
               height: CELL_SIZE,
-              left: enemy.position.x * (CELL_SIZE + GAP_SIZE),
-              top: enemy.position.y * (CELL_SIZE + GAP_SIZE) - 20,
+              left: enemy.pixelPosition.x,
+              top: enemy.pixelPosition.y,
+              // 👇 MODIFICA CHIAVE QUI: Applichiamo lo stesso translateY
+              transform: `translate(-50%, -40%)`, // Torniamo a -83% o prova -90%
+              transition: 'opacity 500ms ease-out',
               opacity: enemy.isAlive ? 1 : 0,
             }}
           >
-            {/* Sprite del nemico */}
             <div className="w-full h-full flex items-center justify-center">
               <img
                 src={assets.enemies[enemy.type][enemy.direction]}
@@ -61,15 +68,15 @@ const GameCharacters = ({ gameState, assets }: GameCharactersProps) => {
               />
             </div>
 
-            {/* 👇 Hitbox di debug del nemico, posizionata qui */}
+            {/* Hitbox di debug - Già corretta, si centra sulla pixelPosition*/}
             {IS_DEBUG_MODE && enemy.isAlive && (
                 <div
                     className="absolute rounded-full border-2 border-orange-500 bg-orange-500/30"
                     style={{
                         width: ENEMY_HITBOX_RADIUS * 2,
                         height: ENEMY_HITBOX_RADIUS * 2,
-                        left: '50%', // Centrata rispetto al div del nemico
-                        top: '50%',  // Centrata rispetto al div del nemico
+                        left: '50%',
+                        top: '50%', // Questo centra la hitbox sul punto (pixelPosition.x, pixelPosition.y)
                         transform: 'translate(-50%, -50%)',
                     }}
                 />

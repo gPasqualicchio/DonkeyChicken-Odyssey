@@ -19,7 +19,7 @@ export const levels: Level[] = [
           "##### #D##",
           "P   # #E##",
           "###   ####",
-          "-#K# #####",
+          "##K# #####",
           "##   #####",
     ],
   },
@@ -106,7 +106,7 @@ export const levels: Level[] = [
       "### ## ###",
       "P        #",
       "### ## # #",
-      "--# ## # #",
+      "### ## # #",
       "### ## # #",
       "E        #",
       "##########",
@@ -116,7 +116,7 @@ export const levels: Level[] = [
            7 - Ah ah!
        */
   {
-    id: 6,
+    id: 7,
     name: "Ah ah!",
       spittingTotems: [
         { id: 1, position: { x: 7, y: 6 }, direction: 'up', isAlive: true, lastShotTime: 600}
@@ -130,12 +130,37 @@ export const levels: Level[] = [
           { id: 601, startPosition: { x: 1, y: 2 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
     grid: [
       "##########",
-      "#         ",
-      "# # ### # ",
-      "# #E###   ",
+      "#        #",
+      "# # ### ##",
+      "# #E###  #",
       "####### ##",
       "#######  P",
       "####### ##",
+    ],
+  },
+      /*
+           8 - Ah ah!
+       */
+  {
+    id: 8,
+    name: "2 is better than 1",
+      spittingTotems: [],
+      keys: [
+          { id: 1, position: { x: 4, y: 3 } }],
+      doors: [
+          { id: 1, position: { x: 1, y: 2 }, type: 'key' }],
+      levers: [],
+      enemies: [
+          { id: 801, startPosition: { x: 9, y: 4 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000},
+          { id: 802, startPosition: { x: 4, y: 3 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
+    grid: [
+      "##########",
+      "#    #####",
+      "# ##     #",
+      "#E## # # #",
+      "######    ",
+      "#####  ###",
+      "#####P####",
     ],
   },
 ];

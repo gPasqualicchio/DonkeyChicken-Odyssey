@@ -1,12 +1,30 @@
-// src/config/Assets.ts
-
 import { Direction } from '../game/game';
 
 // Importa tutte le immagini qui, una sola volta
 import forestBackground from '@/assets/forest-background.jpg';
-import treeSprite from "@/assets/tree-sprite.png";
+
 import keySprite from "@/assets/key_gold_SIMPLE.png";
 import portalSprite from "@/assets/portal_forest_1.png";
+
+import treeSprite from "@/assets/tree-sprite.png";
+import FOREST_tree_full from '@/assets/trees/FOREST_tree_full.png';
+import FOREST_tree_up from '@/assets/trees/FOREST_tree_up.png';
+import FOREST_tree_down from '@/assets/trees/FOREST_tree_down.png';
+import FOREST_tree_left from '@/assets/trees/FOREST_tree_left.png';
+import FOREST_tree_right from '@/assets/trees/FOREST_tree_right.png';
+import FOREST_tree_left_right from '@/assets/trees/FOREST_tree_left_right.png';
+import FOREST_tree_right_right from '@/assets/trees/FOREST_tree_right_right.png';
+import FOREST_tree_left_left from '@/assets/trees/FOREST_tree_left_left.png';
+import FOREST_tree_up_down from '@/assets/trees/FOREST_tree_up_down.png';
+import FOREST_tree_up_up from '@/assets/trees/FOREST_tree_up_up.png';
+import FOREST_tree_down_down from '@/assets/trees/FOREST_tree_down_down.png';
+import FOREST_tree_corner_up_left from '@/assets/trees/FOREST_tree_up_left.png';
+import FOREST_tree_corner_up_right from '@/assets/trees/FOREST_tree_right_up.png';
+import FOREST_tree_corner_down_left from '@/assets/trees/FOREST_tree_down_left.png';
+import FOREST_tree_corner_down_right from '@/assets/trees/FOREST_tree_down_right.png';
+import FOREST_tree_solo from '@/assets/trees/FOREST_tree_single.png';
+import FOREST_tree_default from '@/assets/trees/FOREST_tree_single.png'; // Fallback
+
 
 // Giocatore
 import playerSpriteDown from "@/assets/donkeychicken_M_down.png";
@@ -77,6 +95,29 @@ export const GameAssets = {
       t3: pathT3Sprite,
       t4: pathT4Sprite,
       cross: pathCrossSprite,
-    }
+    },
+    trees: {
+        FOREST_tree_full: FOREST_tree_full,
+        FOREST_tree_up: FOREST_tree_up,
+        FOREST_tree_down: FOREST_tree_down,
+        FOREST_tree_left: FOREST_tree_left,
+        FOREST_tree_right: FOREST_tree_right,
+        FOREST_tree_left_right: FOREST_tree_left_right,
+        FOREST_tree_right_right: FOREST_tree_right_right,
+        FOREST_tree_left_left: FOREST_tree_left_left,
+        FOREST_tree_up_down: FOREST_tree_up_down,
+        FOREST_tree_up_up: FOREST_tree_up_up,
+        FOREST_tree_down_down: FOREST_tree_down_down,
+        FOREST_tree_corner_up_left: FOREST_tree_corner_up_left,
+        FOREST_tree_corner_up_right: FOREST_tree_corner_up_right,
+        FOREST_tree_corner_down_left: FOREST_tree_corner_down_left,
+        FOREST_tree_corner_down_right: FOREST_tree_corner_down_right,
+        FOREST_tree_solo: FOREST_tree_solo,
+        FOREST_tree_edge_top: FOREST_tree_up,
+        FOREST_tree_edge_bottom: FOREST_tree_down,
+        FOREST_tree_edge_left: FOREST_tree_left,
+        FOREST_tree_edge_right: FOREST_tree_right,
+        FOREST_tree_default: FOREST_tree_default,
+      }
   }
 };

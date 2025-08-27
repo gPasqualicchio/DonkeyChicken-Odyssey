@@ -97,6 +97,38 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
     return true;
   };
 
+  // 1. NUOVA FUNZIONE HELPER PER SCEGLIERE L'ALBERO CORRETTO
+    const getTreeSpriteSrc = (x: number, y: number): string => {
+      const isTree = (nx: number, ny: number) => level.grid[ny]?.[nx] === '#';
+      const up = isTree(x, y - 1);
+      const down = isTree(x, y + 1);
+      const left = isTree(x - 1, y);
+      const right = isTree(x + 1, y);
+      const upLeft = isTree(x - 1, y - 1);
+      const upRight = isTree(x + 1, y - 1);
+      const downLeft = isTree(x - 1, y + 1);
+      const downRight = isTree(x + 1, y + 1);
+
+      if (up && down && left && right) return assets.tiles.trees.FOREST_tree_full;
+      if (!up && down && left && right) return assets.tiles.trees.FOREST_tree_up;
+      if (up && !down && left && right) return assets.tiles.trees.FOREST_tree_down;
+      if (up && down && !left && right) return assets.tiles.trees.FOREST_tree_left;
+      if (up && down && left && !right) return assets.tiles.trees.FOREST_tree_right;
+      if (!up && !down && !left && !right) return assets.tiles.trees.FOREST_tree_solo;
+      if (!up && !down && left && right) return assets.tiles.trees.FOREST_tree_left_right;
+      if (!up && !down && !left && right) return assets.tiles.trees.FOREST_tree_left_left;
+      if (!up && !down && left && !right) return assets.tiles.trees.FOREST_tree_right_right;
+      if (up && down && !left && !right) return assets.tiles.trees.FOREST_tree_up_down;
+      if (!up && down && !left && !right) return assets.tiles.trees.FOREST_tree_up_up;
+      if (up && !down && !left && !right) return assets.tiles.trees.FOREST_tree_down_down;
+      if (!up && !left) return assets.tiles.trees.FOREST_tree_corner_up_left;
+      if (!up && !right) return assets.tiles.trees.FOREST_tree_corner_up_right;
+      if (!down && !left) return assets.tiles.trees.FOREST_tree_corner_down_left;
+      if (!down && !right) return assets.tiles.trees.FOREST_tree_corner_down_right;
+
+      return assets.tiles.trees.FOREST_tree_default;
+    };
+
   const getPathSprite = (x: number, y: number) => {
     const isWalkableForPath = (x: number, y: number) => {
       if (y < 0 || y >= GRID_HEIGHT || x < 0 || x >= GRID_WIDTH) return false;
@@ -164,7 +196,10 @@ const GameBoard = ({ level, gameState, onDirectionChange, assets }: GameBoardPro
 
   const getCellContent = (cellType: string, x: number, y: number) => {
     switch (cellType) {
-      case 'obstacle': return <img src={assets.tiles.obstacle} alt="Albero" className="w-full h-full object-contain" />;
+        case 'obstacle':
+              const treeSpriteSrc = getTreeSpriteSrc(x, y);
+              return <img src={treeSpriteSrc} alt="Albero" className="w-full h-full object-contain" />;
+
       case 'key':
         const keyAtPosition = level.keys.find(k => k.position.x === x && k.position.y === y);
         if (keyAtPosition && !gameState.hasKeyCollected.includes(keyAtPosition.id) && !gameState.isDoorUnlocked.includes(keyAtPosition.id)) {

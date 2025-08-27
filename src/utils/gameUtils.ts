@@ -1,97 +1,63 @@
-import { Level, GameState, Position, Direction, EnemyState, Key, Door, Lever } from '../game';
+import { Level, GameState, Position, EnemyState } from '../game';
 import { GRID_WIDTH, GRID_HEIGHT } from "@/config/Constants";
 
 /**
- * Inizializza lo stato iniziale del gioco basato sui dati del livello.
- * @param level Il livello da cui leggere le posizioni iniziali.
- * @returns Lo stato del gioco inizializzato.
+ * Crea uno stato di gioco di BASE a partire da un file di livello.
+ * Questa funzione ora cerca la 'P' per la posizione iniziale.
  */
-export const getInitialGameState = (level: Level): GameState => {
-  let startPos: Position = { x: 0, y: 0 };
-  let endPos: Position | undefined;
-  let keyPos: Position | undefined;
-  let doorPos: Position | undefined;
-  let enemies: EnemyState[] = [];
-  let enemyIdCounter = 0;
+export const getInitialGameState = (level: Level): Partial<GameState> => {
+  let startPos: Position = { x: 0, y: 0 }; // Default a 0,0
 
-  // Assicurati che gli array nel livello siano sempre inizializzati
-  const keys: Key[] = level.keys || [];
-  const doors: Door[] = level.doors || [];
-  const levers: Lever[] = level.levers || [];
-
+  // Scansiona la griglia per trovare la posizione di partenza 'P'
   level.grid.forEach((row, y) => {
-    row.split('').forEach((char, x) => {
-      if (char === 'P') startPos = { x, y };
-      if (char === 'E') endPos = { x, y };
-      // Le chiavi, porte e leve sono ora definite negli array, non più nel grid
-    });
+    const pIndex = row.indexOf('P');
+    if (pIndex !== -1) {
+      startPos = { x: pIndex, y: y };
+    }
   });
-
-  // Questo garantisce la compatibilità
-  level.startPosition = startPos;
-  level.endPosition = endPos;
-  level.keyPosition = keyPos;
-  level.doorPosition = doorPos;
 
   return {
     playerPosition: startPos,
-    playerDirection: 'right',
-    lastMoveTime: Date.now(),
+    playerDirection: 'down',
     gameWon: false,
-    moveCount: 0,
     isMoving: false,
     isPlayerDead: false,
-    enemies: level.enemies?.map(e => ({
-      id: enemyIdCounter++,
+    enemies: level.enemies?.map((e, index) => ({
+      id: e.id || index,
       position: e.startPosition,
       type: e.type,
       behavior: e.behavior,
-      visionRange: e.visionRange,
-      moveInterval: e.moveInterval,
+      visionRange: e.visionRange || 5,
+      moveInterval: e.moveInterval || 1000,
       lastMoveTime: 0,
-      direction: "left",
+      direction: "down",
       isAlive: true,
     })) || [],
-    hasKeyCollected: [],
-    isDoorUnlocked: [],
-    keys: keys,
-    doors: doors,
-    levers: levers,
   };
 };
 
 /**
- * Trova il percorso più breve tra due punti in una griglia usando l'algoritmo Breadth-First Search.
- * @param start La posizione di partenza.
- * @param end La posizione di arrivo.
- * @param grid La griglia di gioco.
- * @returns Un array di posizioni che rappresenta il percorso, o un array vuoto se non trovato.
+ * Trova il percorso più breve tra due punti in una griglia.
  */
 export const findPath = (start: Position, end: Position, grid: string[]): Position[] => {
+  if (!grid || grid.length === 0 || grid[0].length === 0) {
+    return [];
+  }
   const queue: { pos: Position, path: Position[] }[] = [{ pos: start, path: [start] }];
   const visited = new Set<string>();
   visited.add(`${start.x},${start.y}`);
 
   while (queue.length > 0) {
     const { pos, path } = queue.shift()!;
-
-    if (pos.x === end.x && pos.y === end.y) {
-      return path;
-    }
-
-    const directions = [
-      { x: 0, y: -1 }, { x: 0, y: 1 },
-      { x: -1, y: 0 }, { x: 1, y: 0 }
-    ];
-
+    if (pos.x === end.x && pos.y === end.y) return path;
+    const directions = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }];
     for (const dir of directions) {
       const nextPos = { x: pos.x + dir.x, y: pos.y + dir.y };
       const posKey = `${nextPos.x},${nextPos.y}`;
-
       if (
-        nextPos.x >= 0 && nextPos.x < GRID_WIDTH &&
-        nextPos.y >= 0 && nextPos.y < GRID_HEIGHT &&
-        grid[nextPos.y] && grid[nextPos.y][nextPos.x] !== '#' &&
+        nextPos.x >= 0 && nextPos.x < grid[0].length &&
+        nextPos.y >= 0 && nextPos.y < grid.length &&
+        grid[nextPos.y]?.[nextPos.x] !== '#' &&
         !visited.has(posKey)
       ) {
         visited.add(posKey);
@@ -100,4 +66,26 @@ export const findPath = (start: Position, end: Position, grid: string[]): Positi
     }
   }
   return [];
+};
+
+/**
+ * Controlla se c'è una linea di vista sgombra tra due punti.
+ */
+export const hasLineOfSight = (start: Position, end: Position, grid: string[], maxRange: number): boolean => {
+    if (!grid || grid.length === 0 || grid[0].length === 0) return false;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance > maxRange) return false;
+    const steps = Math.ceil(distance);
+    if (steps === 0) return true;
+    const xIncrement = dx / steps;
+    const yIncrement = dy / steps;
+    for (let i = 1; i <= steps; i++) {
+        const gridX = Math.round(start.x + xIncrement * i);
+        const gridY = Math.round(start.y + yIncrement * i);
+        if (grid[gridY]?.[gridX] === '#') return false;
+        if (gridX === end.x && gridY === end.y) return true;
+    }
+    return true;
 };
