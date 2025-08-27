@@ -9,6 +9,7 @@ export const SWIPE_THRESHOLD = 30;
 export const PLAYER_HITBOX_RADIUS = 18; // es. se la cella è 48px, un raggio di 18 è permissivo
 export const ENEMY_HITBOX_RADIUS = 18;
 export const PROJECTILE_HITBOX_RADIUS = 10; // I proiettili di solito hanno una hitbox più piccola del loro sprite
+export const PROJECTILE_SPRITE_SIZE = 22;
 
 export const IS_DEBUG_MODE = true;
 

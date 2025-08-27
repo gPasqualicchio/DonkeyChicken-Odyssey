@@ -1,7 +1,5 @@
-import { Level } from './game'; // Importa il tipo Level
+import { Level } from './game';
 
-// Ora tutti i tuoi livelli sono oggetti in un array.
-// Aggiungere un livello è semplice come aggiungere un nuovo oggetto.
 export const levels: Level[] = [
     /*
             1 - La Foresta Introduttiva
@@ -9,18 +7,20 @@ export const levels: Level[] = [
   {
     id: 1,
     name: "La Ciuco Foresta",
-    keys: [{ id: 1, position: { x: 2, y: 5 } }], // Corretto: la chiave è un oggetto in un array
-    doors: [{ id: 1, position: { x: 7, y: 2 }, type: 'key' }], // Corretto: la porta è un oggetto in un array
-    levers: [], // Aggiunto: array per le leve
+    keys: [
+        { id: 1, position: { x: 2, y: 5 } }],
+    doors: [
+        { id: 1, position: { x: 7, y: 2 }, type: 'key' }],
+    levers: [],
     enemies: [],
     grid: [
-          "----#   #-",
-          "----# # #-",
-          "##### #D#-",
-          "P   # #E#-",
-          "###   ###-",
-          "-#K# ##---",
-          "##   #----",
+          "#####   ##",
+          "##### # ##",
+          "##### #D##",
+          "P   # #E##",
+          "###   ####",
+          "-#K# #####",
+          "##   #####",
     ],
   },
       /*
@@ -29,20 +29,20 @@ export const levels: Level[] = [
   {
     id: 2,
     name: "Il Bruco",
-    keys: [], // Aggiunto: array vuoto
-    doors: [], // Aggiunto: array vuoto
-    levers: [], // Aggiunto: array vuoto
+    keys: [],
+    doors: [],
+    levers: [],
     enemies: [
         { id: 201, startPosition: { x: 7, y: 4 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}
     ],
     grid: [
-      "###-------",
-      "#P######--",
-      "# ##   #--",
+      "##########",
+      "#P########",
+      "# ##   ###",
       "# ## # ###",
       "#       E#",
       "##########",
-      "----------",
+      "##########",
     ],
   },
       /*
@@ -51,9 +51,9 @@ export const levels: Level[] = [
   {
     id: 3,
     name: "MapTest",
-    keys: [], // Aggiunto: array vuoto
-    doors: [], // Aggiunto: array vuoto
-    levers: [], // Aggiunto: array vuoto
+    keys: [],
+    doors: [],
+    levers: [],
     enemies: [],
     grid: [
       "#P#       ",
@@ -62,7 +62,7 @@ export const levels: Level[] = [
       "# ## # ###",
       "#        #",
       "# ## ### E",
-      "     #    ",
+      "     #   #",
     ],
   },
       /*
@@ -71,18 +71,21 @@ export const levels: Level[] = [
   {
     id: 4,
     name: "Oh god, another caterpillar",
-    keys: [{ id: 1, position: { x: 1, y: 2 } }],
-    doors: [{ id: 1, position: { x: 4, y: 5 }, type: 'key' }],
+    keys: [
+        { id: 1, position: { x: 1, y: 2 } }],
+    doors: [
+        { id: 1, position: { x: 4, y: 5 }, type: 'key' }],
     levers: [],
-    enemies: [ { id: 201, startPosition: { x: 1, y: 1 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
+    enemies: [
+        { id: 201, startPosition: { x: 1, y: 1 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
     grid: [
-      "#####-----",
-      "#   ####--",
-      "# #    #--",
-      "### ## #--",
-      "#      #--",
-      "#P## ###--",
-      "####E#----",
+      "##########",
+      "#   ######",
+      "# #    ###",
+      "### ## ###",
+      "#      ###",
+      "#P## #####",
+      "####E#####",
     ],
   },
       /*
@@ -118,10 +121,13 @@ export const levels: Level[] = [
       spittingTotems: [
         { id: 1, position: { x: 7, y: 6 }, direction: 'up', isAlive: true, lastShotTime: 600}
       ],
-      keys: [{ id: 1, position: { x: 1, y: 3 } }],
-      doors: [{ id: 1, position: { x: 3, y: 2 }, type: 'key' }],
+      keys: [
+          { id: 1, position: { x: 1, y: 3 } }],
+      doors: [
+          { id: 1, position: { x: 3, y: 2 }, type: 'key' }],
       levers: [],
-      enemies: [ { id: 601, startPosition: { x: 1, y: 2 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
+      enemies: [
+          { id: 601, startPosition: { x: 1, y: 2 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
     grid: [
       "##########",
       "#         ",
