@@ -1,45 +1,39 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react'; // 1. Importa useState
 import GameBoard from "./game/GameBoard";
 import { GameState, Level, Direction } from '../game';
 import { GameAssets } from "@/config/Assets";
 import { Button } from "@/components/ui/button";
 import iconsSprite from '@/assets/icons/Icons_InGame.png';
+import restartButtonSprite from '@/assets/icons/restart_icon.png';
+import { useGameEngine } from '@/hooks/useGameEngine';
 
-// 1. L'interfaccia ora definisce tutte le props ricevute da App.tsx
 interface GameManagerProps {
-  gameState: GameState;
-  currentLevelData: Level;
-  handleDirectionChange: (direction: Direction | null) => void;
-  handleLevelReset: () => void;
   onGoToMainMenu: () => void;
 }
 
-const GameManager = ({
-  gameState,
-  currentLevelData,
-  handleDirectionChange,
-  handleLevelReset,
-  onGoToMainMenu
-}: GameManagerProps) => {
+const GameManager = ({ onGoToMainMenu }: GameManagerProps) => {
+  const {
+    gameState,
+    currentLevelData,
+    handleDirectionChange,
+    handleLevelReset,
+  } = useGameEngine();
 
-  // L'hook useGameEngine NON viene più chiamato qui
+  // 2. Dichiara la variabile di stato per il menu di conferma
+  const [isConfirmMenuOpen, setConfirmMenuOpen] = useState(false);
 
-  // Gestione del tasto "indietro" del browser
   useEffect(() => {
     window.history.pushState({ screen: 'game' }, '');
-
     const handlePopState = (event: PopStateEvent) => {
       event.preventDefault();
       onGoToMainMenu();
     };
-
     window.addEventListener('popstate', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, [onGoToMainMenu]);
 
-  // Guardia di sicurezza per evitare crash se i dati non sono pronti
   if (!currentLevelData) {
     return <div>Caricamento livello...</div>;
   }
@@ -48,10 +42,10 @@ const GameManager = ({
     <div className="relative">
       <div className="absolute top-8 right-8 flex gap-2 z-30">
         <Button onClick={handleLevelReset} className="w-12 h-12 p-0 bg-transparent hover:bg-green-700/50 border-none shadow-none">
-          <img src={iconsSprite} alt="Restart Icon" className="w-full h-full" />
+          <img src={restartButtonSprite} alt="Restart Icon" className="w-full h-full" />
         </Button>
 
-        <Button onClick={onGoToMainMenu} className="w-12 h-12 p-0 bg-transparent hover:bg-green-700/50 border-none shadow-none">
+        <Button onClick={() => setConfirmMenuOpen(true)} className="w-12 h-12 p-0 bg-transparent hover:bg-green-700/50 border-none shadow-none">
           <img src={iconsSprite} alt="Main Menu Icon" className="w-full h-full" />
         </Button>
 
@@ -70,6 +64,30 @@ const GameManager = ({
         onDirectionChange={handleDirectionChange}
         assets={GameAssets}
       />
+
+      {/* 3. Usa il nome corretto della variabile (isConfirmMenuOpen) */}
+      {isConfirmMenuOpen && (
+        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-800 border border-yellow-500 rounded-lg p-8 shadow-lg text-center text-white flex flex-col gap-6">
+            <h2 className="text-2xl font-bold">Tornare al Menu Principale?</h2>
+            <p className="text-gray-300">I progressi in questo livello andranno persi.</p>
+            <div className="flex justify-center gap-4">
+              <Button
+                onClick={onGoToMainMenu}
+                className="bg-green-600 hover:bg-green-500 px-8 py-4 text-lg"
+              >
+                Sì
+              </Button>
+              <Button
+                onClick={() => setConfirmMenuOpen(false)}
+                className="bg-red-600 hover:bg-red-500 px-8 py-4 text-lg"
+              >
+                No
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
