@@ -145,19 +145,17 @@ export const levels: Level[] = [
     id: 8,
     name: "2 is better than 1",
       spittingTotems: [],
-      keys: [
-          { id: 1, position: { x: 4, y: 3 } }],
-      doors: [
-          { id: 1, position: { x: 1, y: 2 }, type: 'key' }],
+      keys: [],
+      doors: [],
       levers: [],
       enemies: [
           { id: 801, startPosition: { x: 9, y: 4 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000},
           { id: 802, startPosition: { x: 4, y: 3 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
     grid: [
       "##########",
-      "#    #####",
-      "# ##     #",
-      "#E## # # #",
+      "##E  #####",
+      "####     #",
+      "#### # # #",
       "######    ",
       "#####  ###",
       "#####P####",
