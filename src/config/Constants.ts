@@ -16,7 +16,7 @@ export const CHARACTER_Y_OFFSET = -16;
 export const IS_DEBUG_MODE = true;
 
 export const FIRE_INTERVAL = 1200;
-export const PROJECTILE_SPEED = 3;
+export const PROJECTILE_SPEED = 300;
 export const MOVE_DURATION = 150;
 export const MOVE_COOLDOWN = 200;
 export const ENEMY_MOVE_INTERVAL = 200;

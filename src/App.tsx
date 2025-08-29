@@ -5,15 +5,12 @@ import GameManager from "./components/GameManager";
 import { audio } from "./audio/AudioManager";
 import { useGameEngine } from "./hooks/useGameEngine";
 import { levels } from "./components/levels";
-import { IS_DEBUG_MODE } from "./config/Constants";
 
 import backgroundMusic from "/audio/START_Adventure_Groove.mp3";
 import gameMusic from "/audio/CiucoForestThemeSong.mp3";
 
 const App = () => {
-  const [screenState, setScreenState] = useState<'startup' | 'mainMenu' | 'levelSelect' | 'game'>('startup');
-
-  // 1. L'engine del gioco vive qui, al livello più alto.
+  const [screenState, setScreenState] = useState<'startup' | 'mainMenu' | 'game'>('startup');
   const gameEngine = useGameEngine();
 
   useEffect(() => {
@@ -23,8 +20,9 @@ const App = () => {
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden) audio.stopAll();
-      else {
+      if (document.hidden) {
+        audio.stopAll();
+      } else {
         if (screenState === 'mainMenu') audio.play('MainMenu_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
         else if (screenState === 'game') audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
       }
@@ -39,36 +37,30 @@ const App = () => {
     setScreenState('mainMenu');
   };
 
-  // 2. Le funzioni ora interagiscono con l'istanza dell'engine
   const handleStartNewGame = () => {
-    if (IS_DEBUG_MODE) {
-      setScreenState('levelSelect');
-    } else {
-      audio.stop('MainMenu_Theme');
-      audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
-      gameEngine.startNewGame(); // Resetta il salvataggio al livello 0
-      setScreenState('game');
-    }
+    audio.stop('MainMenu_Theme');
+    audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
+    gameEngine.startNewGame();
+    setScreenState('game');
   };
 
   const handleContinueGame = () => {
-    audio.stop('MainMenu_Theme');
-    audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
-    // Non fa nulla all'engine, che caricherà in automatico l'ultimo salvataggio
-    setScreenState('game');
+    // Qui andrà la logica per caricare il salvataggio
+    // Per ora, si comporta come New Game
+    handleStartNewGame();
   };
 
   const handleSelectLevel = (levelIndex: number) => {
     audio.stop('MainMenu_Theme');
     audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
-    gameEngine.startGameAtLevel(levelIndex); // Imposta il livello specifico
+    gameEngine.startGameAtLevel(levelIndex);
     setScreenState('game');
   };
 
   return (
     <div className="App">
       {screenState === 'startup' && (
-        <StartupScreen onStart={handleGoToMainMenu} />
+        <StartupScreen onStart={() => setScreenState('mainMenu')} />
       )}
       {screenState === 'mainMenu' && (
         <MainMenu
@@ -79,13 +71,13 @@ const App = () => {
         />
       )}
       {screenState === 'game' && (
-        // 3. Passiamo tutto il necessario al GameManager
         <GameManager
           gameState={gameEngine.gameState}
-          currentLevelData={gameEngine.currentLevelData}
           handleDirectionChange={gameEngine.handleDirectionChange}
           handleLevelReset={gameEngine.handleLevelReset}
-          onGoToMainMenu={handleGoToMainMenu} // Aggiunto per il pulsante nel gioco
+          actionableLeverId={gameEngine.actionableLeverId}
+          toggleLever={gameEngine.toggleLever}
+          onGoToMainMenu={handleGoToMainMenu}
         />
       )}
     </div>

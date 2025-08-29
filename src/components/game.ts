@@ -95,6 +95,9 @@ export interface Level {
 }
 
 export interface GameState {
+  // --- AGGIUNTO QUI ---
+  level: Level; // Lo stato ora contiene un riferimento diretto al livello attuale
+
   playerPosition: Position;
   playerPixelPosition: Position;
   startPosition: Position; // <-- Aggiunto per coerenza
@@ -105,7 +108,9 @@ export interface GameState {
   moveCount: number;
   hasKeyCollected: number[];
   isDoorUnlocked: number[];
-  isLeverPressed: number | null;
+   // --- MODIFICATO QUI ---
+    // Sostituiamo `isLeverPressed` con un array di ID
+    pressedLeverIds: number[];
   enemies: EnemyState[];
   projectiles: Projectile[];
   spittingTotems: SpittingTotem[];

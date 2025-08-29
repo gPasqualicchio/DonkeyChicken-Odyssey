@@ -89,10 +89,10 @@ export const levels: Level[] = [
     ],
   },
       /*
-           6- Such a cool totem
+           5- Such a cool totem
        */
   {
-    id: 6,
+    id: 5,
     name: "Such a cool totem",
       spittingTotems: [
         { id: 1, position: { x: 3, y: 0 }, direction: 'down', isAlive: true, lastShotTime: 600},
@@ -113,36 +113,34 @@ export const levels: Level[] = [
     ],
   },
       /*
-           7 - Ah ah!
+           6 - Ah ah!
        */
   {
-    id: 7,
+    id: 6,
     name: "Ah ah!",
       spittingTotems: [
         { id: 1, position: { x: 7, y: 6 }, direction: 'up', isAlive: true, lastShotTime: 600}
       ],
-      keys: [
-          { id: 1, position: { x: 1, y: 3 } }],
-      doors: [
-          { id: 1, position: { x: 3, y: 2 }, type: 'key' }],
+      keys: [],
+      doors: [],
       levers: [],
       enemies: [
-          { id: 601, startPosition: { x: 1, y: 2 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
+          { id: 601, startPosition: { x: 2, y: 1 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
     grid: [
       "##########",
-      "#        #",
-      "# # ### ##",
-      "# #E###  #",
+      "##       #",
+      "### ### ##",
+      "###E###  #",
       "####### ##",
       "#######  P",
       "####### ##",
     ],
   },
       /*
-           8 - Ah ah!
+           7 - Ah ah!
        */
   {
-    id: 8,
+    id: 7,
     name: "2 is better than 1",
       spittingTotems: [],
       keys: [],
