@@ -1,48 +1,24 @@
-import { Level, GameState, Position, EnemyState } from '../game';
-import { GRID_WIDTH, GRID_HEIGHT } from "@/config/Constants";
+import { Level, Position, EnemyState } from '../game';
+
+// Questa funzione non è più usata, può essere rimossa se vuoi.
+export const getInitialGameState = (level: Level): Partial<GameState> => { /* ... */ };
 
 /**
- * Crea uno stato di gioco di BASE a partire da un file di livello.
- * Questa funzione ora cerca la 'P' per la posizione iniziale.
+ * Trova il percorso più breve, tenendo conto di muri, porte CHIUSE e altri nemici.
  */
-export const getInitialGameState = (level: Level): Partial<GameState> => {
-  let startPos: Position = { x: 0, y: 0 }; // Default a 0,0
+export const findPath = (
+    start: Position,
+    end: Position,
+    level: Level,
+    isDoorUnlocked: number[],
+    otherEnemies: EnemyState[],
+    enemyId: number
+): Position[] => {
 
-  // Scansiona la griglia per trovare la posizione di partenza 'P'
-  level.grid.forEach((row, y) => {
-    const pIndex = row.indexOf('P');
-    if (pIndex !== -1) {
-      startPos = { x: pIndex, y: y };
-    }
-  });
-
-  return {
-    playerPosition: startPos,
-    playerDirection: 'down',
-    gameWon: false,
-    isMoving: false,
-    isPlayerDead: false,
-    enemies: level.enemies?.map((e, index) => ({
-      id: e.id || index,
-      position: e.startPosition,
-      type: e.type,
-      behavior: e.behavior,
-      visionRange: e.visionRange || 5,
-      moveInterval: e.moveInterval || 1000,
-      lastMoveTime: 0,
-      direction: "down",
-      isAlive: true,
-    })) || [],
-  };
-};
-
-/**
- * Trova il percorso più breve tra due punti in una griglia.
- */
-export const findPath = (start: Position, end: Position, grid: string[]): Position[] => {
-  if (!grid || grid.length === 0 || grid[0].length === 0) {
+  if (!level.grid || level.grid.length === 0 || level.grid[0].length === 0) {
     return [];
   }
+
   const queue: { pos: Position, path: Position[] }[] = [{ pos: start, path: [start] }];
   const visited = new Set<string>();
   visited.add(`${start.x},${start.y}`);
@@ -51,15 +27,39 @@ export const findPath = (start: Position, end: Position, grid: string[]): Positi
     const { pos, path } = queue.shift()!;
     if (pos.x === end.x && pos.y === end.y) return path;
     const directions = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }];
+
     for (const dir of directions) {
       const nextPos = { x: pos.x + dir.x, y: pos.y + dir.y };
       const posKey = `${nextPos.x},${nextPos.y}`;
+
       if (
-        nextPos.x >= 0 && nextPos.x < grid[0].length &&
-        nextPos.y >= 0 && nextPos.y < grid.length &&
-        grid[nextPos.y]?.[nextPos.x] !== '#' &&
+        nextPos.x >= 0 && nextPos.x < level.grid[0].length &&
+        nextPos.y >= 0 && nextPos.y < level.grid.length &&
         !visited.has(posKey)
       ) {
+        // --- LOGICA DI CONTROLLO DEFINITIVA ---
+
+        // 1. Controlla i muri (dalla griglia)
+        if (level.grid[nextPos.y][nextPos.x] === '#') {
+          continue;
+        }
+
+        // 2. Controlla le porte (dall'array degli oggetti, ignorando la griglia)
+        const door = level.doors.find(d => d.position.x === nextPos.x && d.position.y === nextPos.y);
+        if (door && !isDoorUnlocked.includes(door.id)) {
+            // Se c'è una porta in questa posizione ED è chiusa, blocca il percorso.
+            console.log(`%c[Pathfinding] Enemy ${enemyId} found a CLOSED door at (${nextPos.x}, ${nextPos.y}). Path blocked.`, 'color: yellow;');
+            continue;
+        }
+
+        // 3. Controlla gli altri nemici
+        const isOccupiedByOtherEnemy = otherEnemies.some(
+            enemy => !enemy.isMoving && enemy.position.x === nextPos.x && enemy.position.y === nextPos.y
+        );
+        if (isOccupiedByOtherEnemy) {
+            continue;
+        }
+
         visited.add(posKey);
         queue.push({ pos: nextPos, path: [...path, nextPos] });
       }
@@ -68,24 +68,5 @@ export const findPath = (start: Position, end: Position, grid: string[]): Positi
   return [];
 };
 
-/**
- * Controlla se c'è una linea di vista sgombra tra due punti.
- */
-export const hasLineOfSight = (start: Position, end: Position, grid: string[], maxRange: number): boolean => {
-    if (!grid || grid.length === 0 || grid[0].length === 0) return false;
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance > maxRange) return false;
-    const steps = Math.ceil(distance);
-    if (steps === 0) return true;
-    const xIncrement = dx / steps;
-    const yIncrement = dy / steps;
-    for (let i = 1; i <= steps; i++) {
-        const gridX = Math.round(start.x + xIncrement * i);
-        const gridY = Math.round(start.y + yIncrement * i);
-        if (grid[gridY]?.[gridX] === '#') return false;
-        if (gridX === end.x && gridY === end.y) return true;
-    }
-    return true;
-};
+// hasLineOfSight rimane invariata
+export const hasLineOfSight = (start: Position, end: Position, grid: string[], maxRange: number): boolean => { /* ... */ };

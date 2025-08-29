@@ -112,7 +112,6 @@ export const useGameEngine = () => {
   const movePlayer = useCallback((direction: Direction) => {
     setGameState(prev => {
       if (Date.now() - prev.lastMoveTime < MOVE_COOLDOWN || prev.isMoving || prev.isPlayerDead || prev.gameWon) return prev;
-
       const newPosition = { ...prev.playerPosition };
       switch (direction) {
         case "up": newPosition.y--; break;
@@ -120,10 +119,8 @@ export const useGameEngine = () => {
         case "left": newPosition.x--; break;
         case "right": newPosition.x++; break;
       }
-
       const destinationCell = prev.level.grid[newPosition.y]?.[newPosition.x];
       if (!destinationCell || destinationCell === '#') return prev;
-
       let newIsDoorUnlocked = [...prev.isDoorUnlocked];
       let newHasKeyCollected = [...prev.hasKeyCollected];
       const door = prev.level.doors.find(d => d.position.x === newPosition.x && d.position.y === newPosition.y);
@@ -135,10 +132,8 @@ export const useGameEngine = () => {
           return prev;
         }
       }
-
       const enemy = prev.enemies.find(e => e.position.x === newPosition.x && e.position.y === newPosition.y && e.isAlive);
       if (enemy) return prev;
-
       return {
         ...prev,
         isDoorUnlocked: newIsDoorUnlocked,
@@ -161,12 +156,10 @@ export const useGameEngine = () => {
     const gameLoop = (currentTime: number) => {
       const deltaTime = (currentTime - lastTimeRef.current) / 1000;
       lastTimeRef.current = currentTime;
-
       setGameState(prev => {
         if (prev.isPlayerDead || prev.gameWon) return prev;
         let newState = { ...prev };
         const now = Date.now();
-
         if (newState.isMoving) {
           const elapsed = now - newState.moveStartTime;
           const progress = Math.min(elapsed / MOVE_DURATION, 1);
@@ -187,7 +180,6 @@ export const useGameEngine = () => {
             setActionableLeverId(leverAtPosition ? leverAtPosition.id : null);
           }
         }
-
         newState.enemies = newState.enemies.map(enemy => {
             if (!enemy.isMoving) return enemy;
             const elapsed = now - enemy.moveStartTime;
@@ -203,11 +195,8 @@ export const useGameEngine = () => {
             }
             return { ...enemy, pixelPosition: newPixelPosition };
         });
-
         const projectileUpdates = updateProjectiles(newState, nextProjectileId, deltaTime);
-        // --- MODIFICATO QUI: Applichiamo le modifiche ai nemici restituite da projectileUpdates ---
         newState = { ...newState, ...projectileUpdates };
-
         const hittingProjectile = newState.projectiles.find(proj => {
           const dx = newState.playerPixelPosition.x - proj.position.x;
           const dy = newState.playerPixelPosition.y - proj.position.y;
@@ -216,7 +205,6 @@ export const useGameEngine = () => {
           return distanceSquared < (sumOfRadii * sumOfRadii);
         });
         if (hittingProjectile) newState.isPlayerDead = true;
-
         return newState;
       });
       animationFrameId = requestAnimationFrame(gameLoop);
@@ -225,43 +213,68 @@ export const useGameEngine = () => {
     return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
-  useEffect(() => {
-    const aiLoop = setInterval(() => {
-      setGameState(prev => {
-        if (prev.gameWon || prev.isPlayerDead) return prev;
-        const playerGridPos = prev.isMoving ? prev.playerPosition : prev.startPosition;
-        let playerIsCaught = false;
-        const newEnemies = prev.enemies.map(enemy => {
-          if (enemy.isMoving || !enemy.isAlive || !enemy.moveInterval || Date.now() - enemy.lastMoveTime < enemy.moveInterval) {
-            return enemy;
-          }
-          let desiredNextPosition = { ...enemy.position };
-          let isPlayerInVision = false;
-          const path = findPath(enemy.position, playerGridPos, prev.level.grid);
-          if (path.length > 1 && (path.length - 1) <= (enemy.visionRange || 0)) {
-              isPlayerInVision = true;
-          }
-          if (enemy.behavior === 'smart_active' && isPlayerInVision) {
-            if (path.length > 1) desiredNextPosition = path[1];
-          } else {
-            return enemy;
-          }
-          if (desiredNextPosition.x === playerGridPos.x && desiredNextPosition.y === playerGridPos.y) {
-            playerIsCaught = true;
-            return enemy;
-          }
-          if (desiredNextPosition.x !== enemy.position.x || desiredNextPosition.y !== enemy.position.y) {
-            const desiredDirection = (desiredNextPosition.x > enemy.position.x ? 'right' : desiredNextPosition.x < enemy.position.x ? 'left' : desiredNextPosition.y > enemy.position.y ? 'down' : 'up');
-            return { ...enemy, isMoving: true, startPosition: enemy.position, position: desiredNextPosition, moveStartTime: Date.now(), lastMoveTime: Date.now(), direction: desiredDirection };
-          }
-          return enemy;
-        });
-        if (playerIsCaught) return { ...prev, isPlayerDead: true };
-        return { ...prev, enemies: newEnemies };
-      });
-    }, ENEMY_MOVE_INTERVAL);
-    return () => clearInterval(aiLoop);
-  }, []);
+    useEffect(() => {
+        const aiLoop = setInterval(() => {
+          setGameState(prev => {
+            if (prev.gameWon || prev.isPlayerDead) return prev;
+            const playerGridPos = prev.isMoving ? prev.playerPosition : prev.startPosition;
+            let playerIsCaught = false;
+
+            const newEnemies = prev.enemies.map(enemy => {
+              if (enemy.isMoving || !enemy.isAlive || !enemy.moveInterval || Date.now() - enemy.lastMoveTime < enemy.moveInterval) {
+                return enemy;
+              }
+
+              const otherEnemies = prev.enemies.filter(e => e.id !== enemy.id);
+
+              // --- MODIFICATO QUI: Aggiunto 'enemy.id' alla chiamata ---
+              const path = findPath(enemy.position, playerGridPos, prev.level, prev.isDoorUnlocked, otherEnemies, enemy.id);
+
+              let isPlayerInVision = false;
+              // La logica della visione ora ignora gli altri nemici per non essere bloccata
+              const pathForVision = findPath(enemy.position, playerGridPos, prev.level, prev.isDoorUnlocked, [], enemy.id);
+              if (pathForVision.length > 1 && (pathForVision.length - 1) <= (enemy.visionRange || 0)) {
+                  isPlayerInVision = true;
+              }
+
+              let desiredNextPosition = { ...enemy.position };
+              if (enemy.behavior === 'smart_active' && isPlayerInVision) {
+                if (path.length > 1) { // Usa il percorso che considera gli altri nemici per muoversi
+                  desiredNextPosition = path[1];
+                } else {
+                  return enemy;
+                }
+              } else {
+                return enemy;
+              }
+
+              if (desiredNextPosition.x === playerGridPos.x && desiredNextPosition.y === playerGridPos.y) {
+                playerIsCaught = true;
+                return enemy;
+              }
+
+              // Controllo anti-collisione prima di muoversi (questo è ridondante se findPath funziona, ma è una sicurezza in più)
+              const isNextTileOccupied = otherEnemies.some(
+                  e => e.position.x === desiredNextPosition.x && e.position.y === desiredNextPosition.y
+              );
+              if (isNextTileOccupied) {
+                  return enemy;
+              }
+
+              if (desiredNextPosition.x !== enemy.position.x || desiredNextPosition.y !== enemy.position.y) {
+                const desiredDirection = (desiredNextPosition.x > enemy.position.x ? 'right' : desiredNextPosition.x < enemy.position.x ? 'left' : desiredNextPosition.y > enemy.position.y ? 'down' : 'up');
+                return { ...enemy, isMoving: true, startPosition: enemy.position, position: desiredNextPosition, moveStartTime: Date.now(), lastMoveTime: Date.now(), direction: desiredDirection };
+              }
+
+              return enemy;
+            });
+
+            if (playerIsCaught) return { ...prev, isPlayerDead: true };
+            return { ...prev, enemies: newEnemies };
+          });
+        }, ENEMY_MOVE_INTERVAL);
+        return () => clearInterval(aiLoop);
+      }, []);
 
   useEffect(() => {
     const moveContinuously = () => { if (pressedDirection) movePlayer(pressedDirection); };
@@ -284,7 +297,6 @@ export const useGameEngine = () => {
   };
 };
 
-// --- FUNZIONE HELPER ESTERNA (MODIFICATA) ---
 function updateProjectiles(prevState: GameState, nextProjectileId: React.MutableRefObject<number>, deltaTime: number): Partial<GameState> {
     const now = Date.now();
     let newProjectiles = [...prevState.projectiles];
@@ -299,10 +311,8 @@ function updateProjectiles(prevState: GameState, nextProjectileId: React.Mutable
       }
       return totem;
     });
-
     let updatedEnemies = [...prevState.enemies];
     const hitEnemyIds = new Set<number>();
-
     const updatedProjectiles = newProjectiles.map(proj => {
       let newPos = { ...proj.position };
       const distanceToMove = PROJECTILE_SPEED * deltaTime;
@@ -312,24 +322,18 @@ function updateProjectiles(prevState: GameState, nextProjectileId: React.Mutable
         case 'left': newPos.x -= distanceToMove; break;
         case 'right': newPos.x += distanceToMove; break;
       }
-
-      // --- AGGIUNTO: Logica di collisione proiettile-nemico ---
       const hitEnemy = updatedEnemies.find(enemy => {
         if (!enemy.isAlive || hitEnemyIds.has(enemy.id)) return false;
-
         const dx = newPos.x - enemy.pixelPosition.x;
         const dy = newPos.y - enemy.pixelPosition.y;
         const distanceSquared = (dx * dx) + (dy * dy);
         const sumOfRadii = PROJECTILE_HITBOX_RADIUS + ENEMY_HITBOX_RADIUS;
-
         return distanceSquared < (sumOfRadii * sumOfRadii);
       });
-
       if (hitEnemy) {
-        hitEnemyIds.add(hitEnemy.id); // Segna questo nemico come colpito in questo frame
-        return null; // Distruggi il proiettile
+        hitEnemyIds.add(hitEnemy.id);
+        return null;
       }
-
       const gridX = Math.floor(newPos.x / (CELL_SIZE + GAP_SIZE));
       const gridY = Math.floor(newPos.y / (CELL_SIZE + GAP_SIZE));
       if (gridX < 0 || gridX >= prevState.level.grid[0].length || gridY < 0 || gridY >= prevState.level.grid.length || prevState.level.grid[gridY]?.[gridX] === '#') {
@@ -337,15 +341,11 @@ function updateProjectiles(prevState: GameState, nextProjectileId: React.Mutable
       }
       return { ...proj, position: newPos };
     }).filter((p): p is Projectile => p !== null);
-
-    // Se qualche nemico è stato colpito, aggiorna l'array principale dei nemici
     if (hitEnemyIds.size > 0) {
         updatedEnemies = updatedEnemies.map(enemy =>
             hitEnemyIds.has(enemy.id) ? { ...enemy, isAlive: false } : enemy
         );
     }
-
-    // Restituisce gli array aggiornati
     return {
         projectiles: updatedProjectiles,
         spittingTotems,

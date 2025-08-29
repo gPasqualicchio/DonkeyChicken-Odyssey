@@ -14,10 +14,7 @@ import totemSpriteUp from    "@/assets/ENEMY_totem_up.png";
 import totemSpriteLeft from  "@/assets/ENEMY_totem_left.png";
 import totemSpriteRight from "@/assets/ENEMY_totem_right.png";
 import projectileSprite from "@/assets/projectiles/totem_spit.png";
-
-// Nota: hai importato due volte lo stesso sprite per la leva on/off
-// Dovrai usare sprite diversi se vuoi che l'aspetto cambi.
-import leverOnSprite from '@/assets/levers/lever_red_forest_1_up.png';
+import leverOnSprite from '@/assets/levers/lever_red_forest_1_down.png';
 import leverOffSprite from '@/assets/levers/lever_red_forest_1_up.png';
 
 interface GameObjectsProps {
@@ -95,7 +92,7 @@ const GameObjects = ({ level, gameState, assets }: GameObjectsProps) => {
       {/* RENDERIZZAZIONE DELLE LEVE */}
       {level.levers.map((lever) => {
         const isPressed = gameState.pressedLeverIds.includes(lever.id);
-        const leverSprite = isPressed ? assets.tiles.lever_on : assets.tiles.lever_off;
+        const leverSprite = isPressed ? leverOnSprite : leverOffSprite;
 
         return (
           <div
@@ -104,8 +101,8 @@ const GameObjects = ({ level, gameState, assets }: GameObjectsProps) => {
             style={{
               width: CELL_SIZE,
               height: CELL_SIZE,
-              left: lever.position.x * (CELL_SIZE + GAP_SIZE),
-              top: lever.position.y * (CELL_SIZE + GAP_SIZE),
+              left: lever.position.x * (CELL_SIZE + GAP_SIZE) -10,
+              top: lever.position.y * (CELL_SIZE + GAP_SIZE) -15,
             }}
           >
             <img src={leverSprite} alt={`Leva ${isPressed ? 'Attiva' : 'Inattiva'}`} className="w-full h-full object-contain" />

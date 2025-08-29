@@ -1,9 +1,7 @@
 import { Level } from './game';
 
 export const levels: Level[] = [
-    /*
-            1 - La Foresta Introduttiva
-     */
+
   {
     id: 1,
     name: "La Ciuco Foresta",
@@ -23,9 +21,7 @@ export const levels: Level[] = [
           "##   #####",
     ],
   },
-      /*
-              2 - Il Sentiero Tortuoso
-       */
+
   {
     id: 2,
     name: "Il Bruco",
@@ -45,9 +41,7 @@ export const levels: Level[] = [
       "##########",
     ],
   },
-      /*
-              3 - Il Sentiero Tortuoso
-       */
+
   {
     id: 3,
     name: "MapTest",
@@ -65,9 +59,7 @@ export const levels: Level[] = [
       "     #   #",
     ],
   },
-      /*
-           4 - Oh god, another caterpillar
-       */
+
   {
     id: 4,
     name: "Oh god, another caterpillar",
@@ -88,9 +80,7 @@ export const levels: Level[] = [
       "####E#####",
     ],
   },
-      /*
-           5- Such a cool totem
-       */
+
   {
     id: 5,
     name: "Such a cool totem",
@@ -112,9 +102,7 @@ export const levels: Level[] = [
       "##########",
     ],
   },
-      /*
-           6 - Ah ah!
-       */
+
   {
     id: 6,
     name: "Ah ah!",
@@ -136,9 +124,7 @@ export const levels: Level[] = [
       "####### ##",
     ],
   },
-      /*
-           7 - Ah ah!
-       */
+
   {
     id: 7,
     name: "2 is better than 1",
@@ -147,15 +133,41 @@ export const levels: Level[] = [
       doors: [],
       levers: [],
       enemies: [
-          { id: 801, startPosition: { x: 9, y: 4 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000},
-          { id: 802, startPosition: { x: 4, y: 3 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
+          { id: 701, startPosition: { x: 9, y: 4 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000},
+          { id: 702, startPosition: { x: 4, y: 3 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
     grid: [
       "##########",
       "##E  #####",
       "####     #",
       "#### # # #",
       "######    ",
-      "#####  ###",
+      "###### # #",
+      "#####P   #",
+    ],
+  },
+
+  {
+    id: 8,
+    name: "Lever",
+      spittingTotems: [],
+      keys: [],
+levers: [
+    { id: 1, position: { x: 3, y: 2 }, isPressed: false },
+  ],
+
+  doors: [
+    { id: 1, position: { x: 3, y: 4 }, type: 'lever' },
+  ],
+      enemies: [
+                { id: 801, startPosition: { x: 7, y: 5 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000},
+                { id: 802, startPosition: { x: 2, y: 4 }, type: 'bruco', behavior: 'smart_active', visionRange: 4,  moveInterval: 1000}],
+    grid: [
+      "####   ###",
+      "#### # ###",
+      "###    ###",
+      "#### # ###",
+      "#E      ##",
+      "##### # ##",
       "#####P####",
     ],
   },
