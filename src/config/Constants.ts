@@ -13,7 +13,7 @@ export const PROJECTILE_SPRITE_SIZE = 22;
 
 export const CHARACTER_Y_OFFSET = -16;
 
-export const IS_DEBUG_MODE = false;
+export const IS_DEBUG_MODE = true;
 
 export const FIRE_INTERVAL = 1200;
 export const PROJECTILE_SPEED = 3;

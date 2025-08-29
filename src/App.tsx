@@ -1,23 +1,16 @@
-// src/App.tsx
-
 import { useState, useEffect } from "react";
 import MainMenu from "./components/game/MainMenu";
 import StartupScreen from './StartupScreen';
 import GameManager from "./components/GameManager";
 import { audio } from "./audio/AudioManager";
-import { useGameEngine } from "./hooks/useGameEngine"; // Importa l'engine
+import { levels } from "./components/levels";
 
-// Importa i file audio
 import backgroundMusic from "/audio/START_Adventure_Groove.mp3";
 import gameMusic from "/audio/CiucoForestThemeSong.mp3";
 
 const App = () => {
-  const [screenState, setScreenState] = useState('startup');
+  const [screenState, setScreenState] = useState<'startup' | 'mainMenu' | 'game'>('startup');
 
-  // --- 1. L'hook del gioco ora vive qui, al livello più alto ---
-  const gameEngine = useGameEngine();
-
-  // Gestione dell'audio
   useEffect(() => {
     audio.add('MainMenu_Theme', backgroundMusic);
     audio.add('CiucoForest_Theme', gameMusic);
@@ -39,46 +32,37 @@ const App = () => {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [screenState]);
 
-  const handleShowMainMenu = () => {
+  const handleGoToMainMenu = () => {
+    audio.stop('CiucoForest_Theme');
     audio.play('MainMenu_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
     setScreenState('mainMenu');
   };
 
-  // --- 2. Funzioni specifiche per i pulsanti del menu ---
-  const handleStartNewGame = () => {
+  // Funzione unificata per avviare il gioco (sia per Nuova Partita che per Continua/Seleziona)
+  // La logica specifica (reset/load) è gestita all'interno di useGameEngine
+  const handleStartGame = () => {
     audio.stop('MainMenu_Theme');
     audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
-    gameEngine.startNewGame(); // Usa la funzione dall'engine per resettare
-    setScreenState('game');
-  };
-
-  const handleContinueGame = () => {
-    audio.stop('MainMenu_Theme');
-    audio.play('CiucoForest_Theme', { loop: true, volume: 0.5, fadeMs: 600 });
-    // Non serve fare altro, l'engine carica già il salvataggio all'avvio
     setScreenState('game');
   };
 
   return (
     <div className="App">
       {screenState === 'startup' && (
-        <StartupScreen onStart={handleShowMainMenu} />
+        <StartupScreen onStart={handleGoToMainMenu} />
       )}
       {screenState === 'mainMenu' && (
-        // --- 3. Passiamo entrambe le funzioni al MainMenu ---
         <MainMenu
-          onStartNewGame={handleStartNewGame}
-          onContinueGame={handleContinueGame}
+          // Passiamo la stessa funzione per tutte le azioni che portano al gioco
+          onStartNewGame={handleStartGame}
+          onContinueGame={handleStartGame}
+          onSelectLevel={handleStartGame} // Anche la selezione del livello avvia semplicemente il gioco
+          levels={levels}
         />
       )}
       {screenState === 'game' && (
-        // --- 4. Passiamo lo stato e le funzioni dall'engine al GameManager ---
-        <GameManager
-          gameState={gameEngine.gameState}
-          currentLevelData={gameEngine.currentLevelData}
-          handleDirectionChange={gameEngine.handleDirectionChange}
-          handleLevelReset={gameEngine.handleLevelReset}
-        />
+        // Passiamo al GameManager la funzione per tornare al menu
+        <GameManager onGoToMainMenu={handleGoToMainMenu} />
       )}
     </div>
   );

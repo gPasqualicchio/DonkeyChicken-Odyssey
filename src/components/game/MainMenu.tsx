@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { Level } from '@/game';
+import { IS_DEBUG_MODE } from '@/config/Constants';
 
 import mainMenuBackground from '@/assets/SfondoCiuco1.png';
 import titleImage from '@/assets/MainPageTitle3.png';
 
-// 1. Aggiorniamo le props per includere la funzione per continuare
 interface MainMenuProps {
   onStartNewGame: () => void;
   onContinueGame: () => void;
+  onSelectLevel: (levelIndex: number) => void;
+  levels: Level[];
 }
 
-const MainMenu = ({ onStartNewGame, onContinueGame }: MainMenuProps) => {
+const MainMenu = ({ onStartNewGame, onContinueGame, onSelectLevel, levels }: MainMenuProps) => {
   const [animationState, setAnimationState] = useState('loading');
+  const [showLevelSelect, setShowLevelSelect] = useState(false);
 
-  // 2. Controlliamo se esiste un salvataggio per abilitare il pulsante
   const savedLevelIndex = localStorage.getItem('lastLevelIndex');
   const canContinue = savedLevelIndex ? parseInt(savedLevelIndex, 10) > 0 : false;
 
@@ -25,6 +28,14 @@ const MainMenu = ({ onStartNewGame, onContinueGame }: MainMenuProps) => {
       clearTimeout(timer2);
     };
   }, []);
+
+  const handleNewGameClick = () => {
+    if (IS_DEBUG_MODE) {
+      setShowLevelSelect(true);
+    } else {
+      onStartNewGame();
+    }
+  };
 
   const mainContainerClasses = `
     absolute inset-0 w-full h-full flex flex-col p-8 transition-all duration-1000
@@ -50,25 +61,40 @@ const MainMenu = ({ onStartNewGame, onContinueGame }: MainMenuProps) => {
             ${animationState === 'loaded' ? 'opacity-100' : 'opacity-0 -translate-y-4'}
           `}
         >
-          <Button
-            onClick={onStartNewGame}
-            className="text-lg py-6 bg-green-600/80 hover:bg-green-500/80 shadow-lg border-green-400/50"
-          >
-            Nuova Partita
-          </Button>
-
-          {/* 3. Il pulsante ora è funzionale */}
-          <Button
-            onClick={onContinueGame}
-            disabled={!canContinue}
-            className="text-lg py-6"
-          >
-            Continua Partita
-          </Button>
-
-          <Button disabled className="text-lg py-6">
-            Opzioni
-          </Button>
+          {showLevelSelect ? (
+            <>
+              <h2 className="text-xl text-center text-white font-bold">Seleziona Livello (Debug)</h2>
+              <div className="max-h-60 overflow-y-auto pr-2 flex flex-col gap-2">
+                {levels.map((level, index) => (
+                  <Button key={level.id} onClick={() => onSelectLevel(index)}>
+                    {level.id} - {level.name}
+                  </Button>
+                ))}
+              </div>
+              <Button onClick={() => setShowLevelSelect(false)} variant="destructive">
+                Indietro
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={handleNewGameClick}
+                className="text-lg py-6 bg-green-600/80 hover:bg-green-500/80 shadow-lg border-green-400/50"
+              >
+                Nuova Partita
+              </Button>
+              <Button
+                onClick={onContinueGame}
+                disabled={!canContinue}
+                className="text-lg py-6"
+              >
+                Continua Partita
+              </Button>
+              <Button disabled className="text-lg py-6">
+                Opzioni
+              </Button>
+            </>
+          )}
         </div>
       </div>
       <div

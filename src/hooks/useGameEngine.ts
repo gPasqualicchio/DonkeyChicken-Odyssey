@@ -96,7 +96,21 @@ export const useGameEngine = () => {
   const handleDirectionChange = useCallback((direction: Direction | null) => { setPressedDirection(direction); }, []);
   const handleLevelReset = useCallback(() => { setGameState(getInitialGameState(currentLevelData)); }, [currentLevelData, getInitialGameState]);
   const handleNextLevel = useCallback(() => { setCurrentLevelIndex(prev => (prev + 1) % levels.length); }, []);
-  const startNewGame = useCallback(() => { localStorage.setItem('lastLevelIndex', '0'); setCurrentLevelIndex(0); }, []);
+
+  const startGameAtLevel = (levelIndex: number) => {
+    if (levelIndex >= 0 && levelIndex < levels.length) {
+      localStorage.setItem('lastLevelIndex', levelIndex.toString());
+      setCurrentLevelIndex(levelIndex);
+    } else {
+      console.error(`Indice di livello non valido: ${levelIndex}. Avvio dal livello 0.`);
+      localStorage.setItem('lastLevelIndex', '0');
+      setCurrentLevelIndex(0);
+    }
+  };
+
+  const startNewGame = useCallback(() => {
+    startGameAtLevel(0);
+  }, []);
 
   useEffect(() => { setGameState(getInitialGameState(currentLevelData)); }, [currentLevelIndex, currentLevelData, getInitialGameState]);
   useEffect(() => { localStorage.setItem('lastLevelIndex', currentLevelIndex.toString()); }, [currentLevelIndex]);
@@ -182,6 +196,7 @@ export const useGameEngine = () => {
 
           if (isPlayerInVision) {
             if (enemy.behavior === 'smart_active') {
+              const path = findPath(enemy.position, playerGridPos, currentLevelData.grid);
               if (path.length > 1) desiredNextPosition = path[1];
             } else if (enemy.behavior === 'active') {
               if (Math.abs(playerGridPos.x - enemy.position.x) > Math.abs(playerGridPos.y - enemy.position.y)) {
@@ -239,6 +254,7 @@ export const useGameEngine = () => {
     handleDirectionChange,
     handleLevelReset,
     startNewGame,
+    startGameAtLevel, // <-- AGGIUNGI QUESTO
   };
 };
 
